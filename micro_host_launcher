@@ -1,0 +1,31 @@
+// SIte → Micro-Host launcher
+function launchToPleraHost(site){
+  // Point this to your Micro-Host file location (Wix, GitHub Pages, or your domain)
+  const hostUrl = 'REPLACE_WITH_MICRO_HOST_URL.html'; // e.g., https://www.vervenveda.com/host.html
+
+  // Open the host (new tab is fine)
+  const w = window.open(hostUrl, '_blank');
+
+  // Send the site payload a few times while the host is loading
+  const payload = { type: 'site:register', site, focus: true };
+  const send = ()=>{ try{ w.postMessage(payload, '*'); }catch(e){} };
+  const iv = setInterval(send, 400);
+  setTimeout(()=>clearInterval(iv), 6000);
+}
+
+/* Build your 'site' object (map from your builder’s model):
+{
+  slug: 'artistjenny',
+  title: 'Artist Jenny',
+  desc: 'Portfolio & commissions',
+  theme: 'parchment', // or 'midnight' / 'onyx'
+  pages: [
+    { slug:'home',   html:'<h1>Home</h1>…' },
+    { slug:'about',  html:'<h2>About</h2>…' },
+    { slug:'gallery',html:'<h2>Gallery</h2>…' }
+  ]
+}
+*/
+// Example usage from your Launch button:
+// const site = makeSiteFromYourEditorState();
+// launchToPleraHost(site);
