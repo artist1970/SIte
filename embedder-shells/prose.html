@@ -1,0 +1,1247 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>PROSE — The Ultimate Editing Suite (Offline, refreshed)</title>
+
+<!-- Elegant brand font (falls back gracefully if offline) -->
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Inter:wght@400;600;700&family=Lora:wght@400;600;700&family=Merriweather:wght@400;700&family=Playfair+Display:wght@400;700&family=Roboto+Slab:wght@400;700&family=Poppins:wght@400;600;700&family=Montserrat:wght@400;600;700&family=Nunito:wght@400;700&family=IBM+Plex+Mono:wght@400;700&family=Fira+Code:wght@400;700&family=Cinzel:wght@400;700&family=Aboreto&family=EB+Garamond:wght@400;600;700&family=DM+Serif+Display&family=Cormorant:wght@400;600;700&family=Cormorant+SC:wght@400;600;700&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --parchment-1:#f7f3ea; --parchment-2:#f0e9dc; --parchment-3:#f5efe3;
+    --ink:#1f1712; --accent:#6b3fa0; --gold:#d9b878; --cosmic:#020414;
+    --r7:7px; --r9:9px; --r11:11px; --r21:21px;
+    --s3:3px; --s7:7px; --s9:9px; --s11:11px;
+    --page-max-width: 980px; --page-font-size: 18px; --page-line-height: 1.7;
+    --page-padding: 21px; --page-border: 1px solid rgba(0,0,0,0.08);
+    --page-bg: rgba(255,255,255,0.63); --indent-left: 0px; --indent-first: 0px; --margin-left: 72px; --margin-right: 72px;
+    --body-font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    --title-font: 'Cormorant Garamond', Cormorant, Garamond, Georgia, 'Times New Roman', Times, serif;
+  }
+  html,body{height:100%;margin:0}
+  body{font-family:var(--body-font);color:var(--ink);
+       background:linear-gradient(180deg,var(--parchment-1),var(--parchment-2));}
+
+  /* Header */
+  .header-wrap{position:sticky; top:0; z-index:5;
+    background:linear-gradient(180deg,rgba(255,255,255,.86),rgba(255,255,255,.52));
+    backdrop-filter: blur(6px); border-bottom:1px solid rgba(0,0,0,.06);} 
+  header{max-width:1200px; margin:0 auto; padding:8px 12px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;}
+  .brand{display:flex; flex-direction:column; align-items:flex-start; gap:2px; min-width:280px}
+  .brand .app-title{font-family:var(--title-font); font-weight:700; font-size:44px; letter-spacing:.6px; line-height:1.02;}
+  .brand .app-sub{font-family:var(--title-font); font-weight:600; font-size:12px; opacity:.75; letter-spacing:.8px; margin-top:-6px; font-variant: small-caps;}
+  .header-tools{display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:flex-end; margin-left:auto}
+  .label{font-size:12px; opacity:.8}
+
+  /* Top toolbar row */
+  .toolbar{display:grid; gap:8px; grid-template-columns: repeat(3,1fr);
+           max-width:1200px;margin:0 auto 10px auto;padding:0 12px;}
+  @media(max-width:980px){ .toolbar{grid-template-columns: repeat(2,1fr);} }
+  @media(max-width:720px){ .toolbar{grid-template-columns: 1fr;} }
+
+  .cluster{display:flex; gap:6px; flex-wrap:wrap; align-items:center}
+  .cluster-box{background:#fff; border:1px solid rgba(0,0,0,.08); border-radius:var(--r11);
+               padding:7px; display:flex; flex-wrap:wrap; gap:6px; align-items:center}
+
+  /* Layout */
+  .layout{max-width:1200px; margin:10px auto; display:grid; gap:12px; grid-template-columns:190px 1fr;}
+  .sidebar{position:sticky; top:64px; align-self:start; background:rgba(255,255,255,.6);
+    border:1px solid rgba(0,0,0,.08); border-radius:var(--r11); padding:10px; z-index:4;}
+  
+  .side-title{font-weight:700; font-size:13px; margin-bottom:6px; opacity:.85}
+  .side-btn{width:100%; text-align:left; padding:7px 9px; margin:3px 0; border:1px solid rgba(0,0,0,.1);
+    border-radius:var(--r9); background:#fff; cursor:pointer; font-size:13px;}
+  .side-btn:hover{background:#fafafa}
+
+  #page{margin:0 auto; background:var(--page-bg); border:var(--page-border); border-radius:var(--r11);
+        max-width:var(--page-max-width); box-shadow:0 10px 30px rgba(0,0,0,.06);} 
+  #ruler{position:relative; height:30px; border-bottom:1px solid rgba(0,0,0,.08);
+         background:linear-gradient(180deg,#ffffff,#f7f7f7);
+         border-top-left-radius:var(--r11); border-top-right-radius:var(--r11);} 
+  .ruler-track{position:absolute; left:10px; right:10px; top:12px; height:6px;
+    background:linear-gradient(90deg,#e6e6e6,#f3f3f3); border-radius:999px; border:1px solid rgba(0,0,0,.06);} 
+  .ruler-marker{position:absolute; top:5px; width:10px; height:20px; border-radius:2px;
+    background:#bbb; border:1px solid rgba(0,0,0,.28);} 
+  #markerLeft{background:#90caf9} #markerFirst{background:#81c784}
+  #markerMarginLeft{background:#ffcc80}
+  #markerMarginRight{background:#ffab91}
+  .tab-stop{position:absolute; top:4px; width:0; height:0; border-left:6px solid transparent; border-right:6px solid transparent; border-top:10px solid #7c4dff; cursor:ew-resize;}
+
+  .doc-wrap{ padding:0 10px 14px 10px}
+  /* Document title visible inside the page (restored) */
+  #docTitle{ display:block; width:100%; box-sizing:border-box;
+    max-width:calc(var(--page-max-width) - 2*var(--page-padding));
+    margin:14px auto 0 auto; background:transparent; border:0; outline:0;
+    font-family:var(--title-font); font-weight:600; font-size:28px; letter-spacing:.2px; color:var(--ink);
+    padding: var(--page-padding) var(--page-padding) 0 var(--page-padding);
+  }
+  #docTitle::placeholder{ color:#6b5f57; opacity:.65 }
+
+  #editor{min-height:58vh; padding:0 calc(var(--page-padding) + var(--margin-right)) var(--page-padding) calc(var(--page-padding) + var(--margin-left)); font-size:var(--page-font-size); line-height:var(--page-line-height); outline:0; background: linear-gradient(to right, rgba(0,0,0,0.05) 0, rgba(0,0,0,0.05) var(--margin-left), transparent var(--margin-left), transparent calc(100% - var(--margin-right)), rgba(0,0,0,0.05) calc(100% - var(--margin-right)), rgba(0,0,0,0.05) 100%); }
+  #editor:focus{box-shadow: inset 0 0 0 1px rgba(0,0,0,.05)}
+  #editor img{max-width:100%; height:auto}
+  #editor p, #editor h1, #editor h2, #editor h3, #editor h4, #editor h5, #editor h6{
+    margin-left: var(--indent-left); text-indent: var(--indent-first);
+  }
+
+  .btn-mini{padding:6px 9px; border-radius:var(--r7);
+    border:1px solid rgba(0,0,0,.12); background:#fff; cursor:pointer; font-size:13px;}
+  .btn-mini.active{outline:2px solid #a78bfa}
+  .input-mini{padding:6px 9px; border-radius:var(--r7); border:1px solid rgba(0,0,0,.12); background:#fff; font-size:13px}
+  .color-mini{width:32px; height:28px; border:1px solid rgba(0,0,0,.12); border-radius:var(--r7); background:#fff; padding:0}
+
+  #goalBar{ position:relative; height:22px; border:1px solid rgba(0,0,0,.08); border-radius:999px; overflow:hidden; background:#fff}
+  .goal-progress{ position:absolute; left:0; top:0; bottom:0; width:0; background:linear-gradient(90deg,#81c784,#64b5f6)}
+  .goal-label{ position:relative; text-align:center; font-size:12px; padding-top:3px; color:#333}
+
+  .modal.hidden{display:none}
+  .modal{ position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
+          background:rgba(0,0,0,.25); z-index:50; }
+  .modal-card{ width:min(760px,92vw); max-height:80vh; overflow:auto; background:#fff;
+               border-radius:var(--r11); border:1px solid rgba(0,0,0,.1); padding:14px; }
+  .modal-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px}
+  .modal-head h3{margin:0; font-size:18px}
+  .close-x{cursor:pointer; border:1px solid rgba(0,0,0,.12); border-radius:999px; padding:4px 8px; background:#fafafa}
+
+  /* AI Panel */
+  #aureonPanel.hidden{display:none}
+  #aureonPanel{ position:fixed; right:14px; bottom:14px; width:min(520px,95vw);
+    background:#ffffff; border:1px solid rgba(0,0,0,.12);
+    border-radius:var(--r11); box-shadow:0 14px 40px rgba(0,0,0,.22); z-index:60;}
+  .ai-head{display:flex; align-items:center; justify-content:space-between; gap:8px; padding:10px}
+  .ai-tabs{display:flex; flex-wrap:wrap; gap:4px; padding:6px 10px}
+  .ai-tab{ padding:5px 8px; border:1px solid rgba(0,0,0,.12); border-radius:999px; cursor:pointer; font-size:12px; background:#fff;}
+  .ai-tab.active{background:#f3e8ff; border-color:#a78bfa}
+  .ai-body{padding:10px; display:grid; gap:8px}
+  .ai-rows{display:grid; gap:8px}
+  .ai-row textarea{width:100%; min-height:120px; border:1px solid rgba(0,0,0,.12); border-radius:var(--r9); padding:8px; font-family:var(--body-font)}
+  .ai-row pre{white-space:pre-wrap; word-wrap:break-word; border:1px solid rgba(0,0,0,.12); border-radius:var(--r9); padding:8px; background:#fafafa; min-height:90px}
+  #auroraOptions{display:none}
+
+  .hidden{display:none}
+
+  /* ===== Focus Mode (safe & escapable) ===== */
+  /* Keep header visible in Focus Mode */
+body.focus-on .header-wrap{ display:block !important; }
+  body.focus-on .layout{ grid-template-columns: 1fr; }
+  body.focus-on .sidebar{ display:none !important; }
+  #focusExitBtn{ position:fixed; left:14px; top:12px; z-index:70; display:none; }
+  body.focus-on #focusExitBtn{ display:block; }
+  .focus-pill{ background:#111; color:#fff; border:0; border-radius:999px; padding:8px 12px; cursor:pointer; font-size:13px; opacity:.9 }
+.toast{position:fixed;right:14px;bottom:14px;background:#111;color:#fff;padding:8px 12px;border-radius:999px;box-shadow:0 10px 24px rgba(0,0,0,.25);font-size:13px;opacity:0;pointer-events:none;transition:opacity .25s}.toast.show{opacity:.95}
+  /* ===== Font dropdown (self-rendered items) ===== */
+  .font-face{ position:relative; }
+  .font-menu{ position:absolute; top:110%; left:0; background:#fff; border:1px solid rgba(0,0,0,.12); border-radius:9px; box-shadow:0 10px 26px rgba(0,0,0,.18); min-width:240px; max-height:280px; overflow:auto; padding:6px; z-index:80; }
+  .font-item{ padding:6px 8px; border-radius:7px; cursor:pointer; white-space:nowrap; border:1px solid transparent; }
+  .font-item:hover, .font-item.active{ background:#f3f0ff; border-color:#d9ccff; }
+/* Classic skin — dial back chrome to feel like your original while keeping fixes */
+  .classic-skin .brand .app-title{font-size:38px}
+  .classic-skin .brand .app-sub{font-size:12px;letter-spacing:.6px}
+  .classic-skin .toolbar{grid-template-columns: repeat(2,1fr)}
+  @media(max-width:720px){.classic-skin .toolbar{grid-template-columns:1fr}}
+  .classic-skin .header-wrap header{gap:8px}
+  .classic-skin .header-tools{row-gap:4px}
+</style>
+</head>
+<body class="classic-skin">
+
+<!-- Quick Exit from Focus -->
+<button id="focusExitBtn" class="focus-pill" title="Exit Focus (Esc)">← Exit Focus</button>
+
+<div class="header-wrap">
+  <header>
+    <!-- Brand / App Title -->
+    <div class="brand">
+      <div class="app-title">PROSE</div>
+      <div class="app-sub">The Ultimate Editing Suite — refreshed</div>
+    </div>
+
+    <!-- Tools -->
+    <div class="header-tools">
+      <div class="cluster">
+        
+        
+        <button class="btn-mini" id="focusBtn">Focus Mode</button>
+        <button class="btn-mini" id="wideBtn">Wide Page</button>
+        <button class="btn-mini" id="soundBtn">Sound Off</button>
+        <span class="label">Theme</span>
+        <select class="input-mini" id="themeSelect">
+          <option value="paper" selected>Paper</option>
+          <option value="night">Night</option>
+          <option value="gold">Gold</option>
+          <option value="silver">Silver</option>
+        </select>
+        <button class="btn-mini" id="shortcutsBtn">Shortcuts</button>
+        <button class="btn-mini" id="trackChangesBtn">🔍 Track</button>
+        <button class="btn-mini" id="translateBtn">Translate</button>
+        <button class="btn-mini" id="saveNowBtn">Save</button>
+      </div>
+
+      <div class="cluster">
+        <span class="label">Format</span>
+        <div id="clusterFormat" class="cluster"></div>
+      </div>
+
+      <div class="cluster">
+        <span class="label">Font</span>
+        <div id="clusterFont" class="cluster"></div>
+      </div>
+
+      <div class="cluster">
+        <span class="label">Align</span>
+        <div id="clusterAlign" class="cluster"></div>
+      </div>
+
+      <div class="cluster">
+        <span class="label">Insert</span>
+        <div id="clusterInsert" class="cluster"></div>
+      </div>
+
+      <div class="cluster">
+        <span class="label">Tools</span>
+        <div id="clusterTools" class="cluster"></div>
+      </div>
+    </div>
+  </header>
+
+  <div class="toolbar">
+    <div class="cluster-box">
+      <div id="clusterLayout" class="cluster" style="width:100%"></div>
+    </div>
+    <div class="cluster-box" style="display:grid; gap:6px">
+      <div id="goalBar"><div class="goal-progress"></div><div class="goal-label">—</div></div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center">
+        <button class="btn-mini" id="insertStarterBtn">Starter</button>
+        <button class="btn-mini" id="aureonToolbarBtn">AI</button>
+        <button class="btn-mini" id="showTOCBtn">TOC</button>
+        <button class="btn-mini" id="showOutlinerBtn">Outliner</button>
+      </div>
+    </div>
+    <div class="cluster-box">
+      <div class="side-title">Structure</div>
+      <div id="docStructure" style="max-height:120px; overflow:auto; font-size:13px;"></div>
+    </div>
+  </div>
+</div>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="side-title">Quick Tools</div>
+    <button class="side-btn" id="showFindReplaceBtn">Find & Replace</button>
+    <button class="side-btn" id="showCommentBtn">Comments</button>
+    <button class="side-btn" id="showTemplatesBtn">Templates</button>
+    <button class="side-btn" id="showGoalsBtn">Goals</button>
+    <button class="side-btn" id="showFootnoteBtn">Footnotes</button>
+    <button class="side-btn" id="showThesaurusBtn">Thesaurus</button>
+    <button class="side-btn" id="showExportBtn">Export / Import</button>
+    <button class="side-btn" id="showRestoreBtn">Restore</button>
+    <button class="side-btn" id="showVersionsBtn">Versions</button>
+    <button class="side-btn" id="aureonBtn">Aureon / Aurora</button>
+  </aside>
+
+  <main>
+    <div id="page">
+      <div id="ruler" class="hidden">
+        <div class="ruler-track"></div>
+        <div class="ruler-marker" id="markerMarginLeft" title="Left margin"></div>
+        <div class="ruler-marker" id="markerLeft" title="Left indent"></div>
+        <div class="ruler-marker" id="markerFirst" title="First line"></div>
+        <div class="ruler-marker" id="markerMarginRight" title="Right margin"></div>
+      </div>
+      <div class="doc-wrap">
+        <!-- Restored document title position -->
+        <input id="docTitle" placeholder="Untitled Document" />
+        <div id="editor" contenteditable="true"><p></p></div>
+        <div id="footnotes" style="padding:10px 18px 18px 18px; font-size:13px; opacity:.85"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ===================== Modals (minimal shells to keep all features live) ===================== -->
+<div class="modal hidden" id="shortcutsModal"><div class="modal-card"><div class="modal-head"><h3>Keyboard Shortcuts</h3><div class="close-x" onclick="closeModals()">✖</div></div><div style="font-size:14px;line-height:1.6"><ul><li><b>Cmd/Ctrl + B/I/U</b> – Bold/Italic/Underline</li><li><b>Cmd/Ctrl + Z / Shift+Z</b> – Undo/Redo</li><li><b>Esc</b> – Exit Focus</li></ul></div></div></div>
+
+<div class="modal hidden" id="findReplaceModal"><div class="modal-card"><div class="modal-head"><h3>Find & Replace</h3><div class="close-x" onclick="closeModals()">✖</div></div><div style="display:grid;gap:8px"><input id="findInput" class="input-mini" placeholder="Find"/><input id="replaceInput" class="input-mini" placeholder="Replace with"/><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn-mini" id="findBtn">Find</button><button class="btn-mini" id="clearFindBtn">Clear</button><button class="btn-mini" id="replaceBtn">Replace</button><button class="btn-mini" id="replaceAllBtn">Replace All</button></div><div id="findResult" style="font-size:12px;opacity:.8"></div></div></div></div>
+
+<div class="modal hidden" id="commentModal"><div class="modal-card"><div class="modal-head"><h3>Comments</h3><div class="close-x" onclick="closeModals()">✖</div></div><div style="display:grid;gap:8px"><textarea id="newCommentInput" class="input-mini" style="min-height:80px"></textarea><button class="btn-mini" id="addCommentBtn">Add</button><div id="commentList"></div></div></div></div>
+
+<div class="modal hidden" id="templatesModal"><div class="modal-card"><div class="modal-head"><h3>Templates / Snippets</h3><div class="close-x" onclick="closeModals()">✖</div></div><div style="display:grid;gap:8px"><textarea id="newTemplateInput" class="input-mini" style="min-height:80px"></textarea><button class="btn-mini" id="addTemplateBtn">Add</button><div id="templateList"></div></div></div></div>
+
+<div class="modal hidden" id="tocModal"><div class="modal-card"><div class="modal-head"><h3>Table of Contents</h3><div class="close-x" onclick="closeModals()">✖</div></div><div id="tocContent" style="max-height:55vh;overflow:auto"></div><div style="text-align:center;margin-top:8px"><button class="btn-mini" id="insertTOCBtn">Insert into Document</button></div></div></div>
+
+<div class="modal hidden" id="goalsModal"><div class="modal-card"><div class="modal-head"><h3>Goals</h3><div class="close-x" onclick="closeModals()">✖</div></div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px"><input id="wordGoalInput" class="input-mini" placeholder="Word goal"/><input id="charGoalInput" class="input-mini" placeholder="Char goal"/><input id="timeGoalInput" class="input-mini" placeholder="Minutes"/></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button class="btn-mini" id="setGoalsBtn">Set Goals</button><button class="btn-mini" id="clearGoalsBtn">Clear</button></div></div></div>
+
+<div class="modal hidden" id="footnoteModal"><div class="modal-card"><div class="modal-head"><h3>Footnotes</h3><div class="close-x" onclick="closeModals()">✖</div></div><div style="display:grid;gap:8px"><input id="newFootnoteInput" class="input-mini" placeholder="Footnote text"/><div><button class="btn-mini" id="addFootnoteBtn">Add Footnote</button></div><div id="footnoteList"></div></div></div></div>
+
+<div class="modal hidden" id="thesaurusModal"><div class="modal-card"><div class="modal-head"><h3>Offline Thesaurus</h3><div class="close-x" onclick="closeModals()">✖</div></div><div style="display:grid;gap:8px"><input id="thesaurusInput" class="input-mini" placeholder="Type a word..."/><div id="thesaurusResult"></div></div></div></div>
+
+<div class="modal hidden" id="exportModal"><div class="modal-card"><div class="modal-head"><h3>Export / Import</h3><div class="close-x" onclick="closeModals()">✖</div></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn-mini" id="exportPDF">PDF (Print)</button><button class="btn-mini" id="exportTXT">TXT</button><button class="btn-mini" id="exportMD">MD</button><button class="btn-mini" id="exportHTML">HTML</button><button class="btn-mini" id="exportDOC">DOC</button><button class="btn-mini" id="exportEPUB">EPUB</button><button class="btn-mini" id="exportPROSE">PROSE JSON</button><input id="importFile" type="file" accept=".json,.txt,.html,.md,.doc,.epub" style="display:none"><button class="btn-mini" id="importPROSE">Import PROSE JSON</button></div><div id="exportHint" style="font-size:12px;opacity:.8;margin-top:6px"></div></div></div>
+
+<div class="modal hidden" id="restoreModal"><div class="modal-card"><div class="modal-head"><h3>Restore</h3><div class="close-x" onclick="closeModals()">✖</div></div><div style="font-size:13px;opacity:.8">Use Versions to restore earlier snapshots.</div></div></div>
+
+<div class="modal hidden" id="versionsModal"><div class="modal-card"><div class="modal-head"><h3>Saved Versions</h3><div class="close-x" onclick="closeModals()">✖</div></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px"><button class="btn-mini" id="snapshotBtn">Snapshot</button><button class="btn-mini" id="clearVersionsBtn">Clear All</button></div><div id="versionList"></div></div></div>
+
+<div class="modal hidden" id="translateModal"><div class="modal-card"><div class="modal-head"><h3>Translate</h3><div class="close-x" onclick="closeModals()">✖</div></div><textarea class="input-mini" id="translateSource" style="min-height:140px"></textarea><div style="margin-top:8px"><button class="btn-mini" id="copyTranslateBtn">Copy</button></div></div></div>
+
+<div class="modal hidden" id="starterModal"><div class="modal-card"><div class="modal-head"><h3>Starter</h3><div class="close-x" onclick="closeModals()">✖</div></div><div style="display:flex;gap:8px;align-items:center"><select id="starterSelect" class="input-mini"><option value="report">Report</option><option value="letter">Letter</option><option value="resume">Resume</option><option value="story">Story</option><option value="poem">Poem</option></select><button class="btn-mini" id="doInsertStarter">Insert</button></div></div></div>
+
+<!-- AI Panel (Aureon + Aurora) -->
+<div id="aureonPanel" class="hidden">
+  <div class="ai-head"><div style="font-weight:700">Aureon · Aurora</div><button class="close-x" id="closeAureon">✖</button></div>
+  <div class="ai-tabs">
+    <div class="ai-tab" id="tabRewrite" data-mode="rewrite">Rewrite</div>
+    <div class="ai-tab" data-mode="summarize">Summarize</div>
+    <div class="ai-tab" data-mode="expand">Expand</div>
+    <div class="ai-tab" data-mode="paraphrase">Paraphrase</div>
+    <div class="ai-tab" data-mode="critique">Critique</div>
+    <div class="ai-tab" data-mode="analyze">Analyze</div>
+  </div>
+  <div class="ai-body">
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <label class="label">Style</label>
+      <select id="aureonStyle" class="input-mini"><option value="plain">Plain</option><option value="poetic">Poetic</option><option value="academic">Academic</option><option value="legal">Legal</option><option value="story">Story</option><option value="cosmic">Cosmic</option></select>
+      <label class="label">Engine</label>
+      <select id="aureonEngine" class="input-mini"><option value="aureon">Aureon (Templates)</option><option value="aurora">Aurora v8.2</option></select>
+      <div id="auroraOptions" style="display:none;align-items:center;gap:6px">
+        <label class="label">Mode</label>
+        <select id="auroraMode" class="input-mini"><option value="rich">Rich</option><option value="light">Light</option></select>
+        <label class="label">Tier</label>
+        <select id="auroraTier" class="input-mini"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option></select>
+        <label class="label">Seed</label>
+        <input id="auroraSeed" class="input-mini" style="width:100px" placeholder="(optional)" />
+      </div>
+    </div>
+    <div class="ai-rows">
+      <textarea id="aureonPrompt" placeholder="Select some text in the editor, or paste here…"></textarea>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn-mini" id="aureonGenerate">Generate</button>
+        <button class="btn-mini" id="aureonInsert">Insert</button>
+      </div>
+      <pre id="aureonOutput"></pre>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===========================
+   CORE UTILITIES
+   =========================== */
+const $ = (idOrSel)=> (typeof idOrSel==="string" && (idOrSel.startsWith("#")||idOrSel.startsWith("."))) ? document.querySelector(idOrSel) : document.getElementById(idOrSel);
+const $$ = (sel)=> Array.from(document.querySelectorAll(sel));
+
+const editorEl = $("editor");
+const titleEl  = $("docTitle");
+const pageEl   = $("page");
+const rulerEl  = $("ruler");
+
+function closeModals(){ $$(".modal").forEach(m=>m.classList.add("hidden")); $("aureonPanel").classList.add("hidden"); }
+function openModal(id){ closeModals(); const el=$(id); if(el) el.classList.remove("hidden"); }
+function downloadFile(filename, content, mime="text/plain"){ const blob=new Blob([content],{type:mime}); const url=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),4000); }
+function escapeHtml(s){ return String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;"); }
+function nowStamp(){ return new Date().toLocaleString(); }
+
+// ===== Font helpers + toast (debug) =====
+function primaryFontName(ff){ if(!ff) return ""; const first = String(ff).split(",")[0].trim().replace(/^['"]|['"]$/g,""); return first; }
+async function ensureFontLoaded(ff){ const fam = primaryFontName(ff); if(!fam || !('fonts' in document)) return true; try{ await document.fonts.load('1em "'+fam+'"'); return document.fonts.check('1em "'+fam+'"'); }catch(e){ return false; } }
+function showToast(msg){ const t=document.getElementById('toast'); if(!t) return; t.textContent=msg; t.classList.add('show'); clearTimeout(window.__toastTimer); window.__toastTimer=setTimeout(()=>t.classList.remove('show'),1600); }
+
+/* ===========================
+   LOCAL STORAGE KEYS
+   =========================== */
+const STORE = {
+  doc:"proseDoc.v1", goals:"proseGoals.v1", comments:"proseComments.v1", templates:"proseTemplates.v1",
+  footnotes:"proseFootnotes.v1", versions:"proseVersions.v1", wordbank:"proseWordBank.v1",
+  settings:"proseSettings.v1", changelog:"proseChangeLog.v1"
+};
+
+/* ===========================
+   SELECTION SAVE / RESTORE
+   =========================== */
+let lastRange=null; function saveRange(){ const sel=window.getSelection(); if(!sel||!sel.rangeCount) return; const r=sel.getRangeAt(0); if(editorEl.contains(r.commonAncestorContainer)) lastRange=r; }
+function restoreRange(){ if(!lastRange) return; const sel=window.getSelection(); sel.removeAllRanges(); sel.addRange(lastRange); }
+editorEl.addEventListener("mouseup", saveRange);
+// New: also capture before focus leaves editor so we never lose the range
+editorEl.addEventListener("mousedown", saveRange);
+editorEl.addEventListener("touchstart", saveRange, {passive:true});
+editorEl.addEventListener("keyup", saveRange);
+editorEl.addEventListener("blur", saveRange);
+// Keep selection even when toolbar controls steal focus
+document.addEventListener('selectionchange', ()=>{
+  const sel=window.getSelection();
+  if(!sel||!sel.rangeCount) return;
+  const r=sel.getRangeAt(0);
+  if(editorEl && editorEl.contains(r.commonAncestorContainer)) lastRange=r;
+});
+// Make selects/buttons restore the saved range before acting
+['fontSelect','sizePreset','fontSizeSelect','colorPicker','highlightPicker','themeSelect','presetSelect','borderSelect'].forEach(id=>{
+  const el=$(id);
+  if(!el) return;
+  el.addEventListener('mousedown', ()=>restoreRange(), true);
+  el.addEventListener('focus', ()=>restoreRange(), true);
+});
+
+function exec(cmd,arg=null){
+  // Preserve selection and prefer CSS-based styling for consistency
+  restoreRange();
+  try{ document.execCommand('styleWithCSS', false, true); }catch(e){}
+
+  // Capture state before running the command
+  let before=null; try{ before=document.queryCommandState?document.queryCommandState(cmd):null; }catch(_){ before=null; }
+
+  // Attempt the native command first
+  let ok=false; try{ ok=document.execCommand(cmd,false,arg); }catch(_){ ok=false; }
+
+  editorEl.focus();
+  saveRange();
+  updateToolbarState();
+
+  // Fallback: if nothing changed (some embeds lose selection / block execCommand),
+  // wrap selection with a span carrying the intended inline style.
+  if(!ok){
+    let after=null; try{ after=document.queryCommandState?document.queryCommandState(cmd):null; }catch(_){ after=null; }
+    if(before===after){
+      const fallbackStyles={
+        bold:{fontWeight:'700'},
+        italic:{fontStyle:'italic'},
+        underline:{textDecoration:'underline'},
+        strikeThrough:{textDecoration:'line-through'}
+      };
+      if(fallbackStyles[cmd]){
+        wrapSelectionWithSpan(fallbackStyles[cmd]);
+        editorEl.focus();
+        saveRange();
+        updateToolbarState();
+      }
+    }
+  }
+}
+function updateToolbarState(){ [{cmd:"bold",btn:"boldBtn"},{cmd:"italic",btn:"italicBtn"},{cmd:"underline",btn:"underlineBtn"},{cmd:"strikeThrough",btn:"strikeBtn"}].forEach(({cmd,btn})=>{ const b=$(btn); if(!b) return; try{ document.queryCommandState(cmd)?b.classList.add("active"):b.classList.remove("active"); }catch(e){} }); }
+editorEl.addEventListener("keyup", updateToolbarState);
+editorEl.addEventListener("mouseup", updateToolbarState);
+
+/* ===========================
+   STICKY SELECTION WIRING (Fix for lost highlight when using toolbar)
+   =========================== */
+// Global delegation so opening any toolbar control preserves the text range
+// Works even for <select> on Chrome/Safari (uses capture phase before focus changes)
+const BLOCK_RESTORE = (el)=> {
+  if(!el) return false;
+  // Do NOT restore selection when the user is typing in modal/side inputs or textareas
+  if (el.matches && el.matches('input, textarea')) return true;
+  // Also don't steal focus from other contenteditables (outside the main #editor)
+  if (el.isContentEditable && !el.closest('#editor')) return true;
+  // NEW: never steal focus inside modals or the AI panel (fixes disabled-feel buttons)
+  if (el.closest && (el.closest('.modal-card') || el.closest('#aureonPanel'))) return true;
+  return false;
+};
+
+document.addEventListener('mousedown', function(e){
+  const t = e.target;
+  if (BLOCK_RESTORE(t)) return; // let the user type
+  // Avoid restoring inside modals/AI panel; only header/toolbar/sidebar need it
+  if (t && (t.closest('.header-tools') || t.closest('.toolbar') || t.closest('.sidebar'))){
+    restoreRange();
+  }
+}, true);
+
+document.addEventListener('focusin', function(e){
+  const t = e.target;
+  if (BLOCK_RESTORE(t)) return; // let the user type
+  // Avoid restoring inside modals/AI panel; only header/toolbar/sidebar need it
+  if (t && (t.closest('.header-tools') || t.closest('.toolbar') || t.closest('.sidebar'))){
+    restoreRange();
+  }
+}, true);
+
+// Explicitly (re)bind critical controls once they exist
+function wireStickySelectionControls(){
+  const ids = [
+    'fontFaceBtn','fontMenu',
+    'fontSelect','sizePreset','fontSizeSelect','colorPicker','highlightPicker',
+    'themeSelect','presetSelect','borderSelect',
+    'alignLeftBtn','alignCenterBtn','alignRightBtn','alignJustifyBtn','ulBtn','olBtn',
+    'indentInc','indentDec','blockquoteBtn','hrBtn','supBtn','subBtn',
+    'tableBtn','codeBtn','linkBtn','insertImageBtn','uploadImageBtn','copyBtn','pasteBtn'
+  ];
+  ids.forEach(id=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    ['pointerdown','mousedown','focus'].forEach(ev=> el.addEventListener(ev, ()=>restoreRange(), true));
+  });
+}
+
+/* ===========================
+   HEADER: FOCUS / WIDE / SOUND / THEME / SAVE
+   =========================== */
+let zen=false, wide=false, sound=false, tracking=false, classic=true;
+let preFocus=null; // remember settings before entering focus
+function setFocus(on){
+  const to = (on===undefined? !zen : !!on);
+  if (to===zen) return;
+  if (to && !zen){ preFocus = loadSettings(); }
+  zen = to;
+  document.body.classList.toggle('focus-on', zen);
+  if ($("focusBtn")) $("focusBtn").innerText = zen ? "Focus On" : "Focus Mode";
+  if (zen){
+    // make the writing surface larger in focus (non-destructive)
+    const base = parseInt(getComputedStyle(document.documentElement).getPropertyValue("--page-font-size"))||18;
+    document.documentElement.style.setProperty("--page-font-size", (base+2)+"px");
+    const w = parseInt(getComputedStyle(document.documentElement).getPropertyValue("--page-max-width"))||980;
+    document.documentElement.style.setProperty("--page-max-width", Math.max(1080, w+160)+"px");
+  } else if (preFocus){
+    // restore exact pre-focus layout
+    applySettings(preFocus);
+    preFocus = null;
+  }
+}
+
+if ($("focusBtn")) $("focusBtn").onclick = ()=> setFocus();
+const classicBtn=$("classicBtn");
+if(classicBtn){
+  classicBtn.onclick=()=>{
+    document.body.classList.toggle('classic-skin');
+    classic = document.body.classList.contains('classic-skin');
+    classicBtn.innerText = classic ? 'Classic' : 'Modern';
+    saveSettings();
+  };
+}
+$("focusExitBtn").onclick = ()=> setFocus(false);
+window.addEventListener('keydown', (e)=>{ if(e.key==='Escape' && zen){ setFocus(false); } });
+
+$("wideBtn").onclick = function(){ wide=!wide; this.innerText=wide?"Wide On":"Wide Page"; document.documentElement.style.setProperty("--page-max-width", wide?"1180px":"980px"); saveSettings(); };
+$("soundBtn").onclick = function(){ sound=!sound; this.innerText=sound?"Sound On":"Sound Off"; saveSettings(); };
+
+$("themeSelect").onchange = function(){
+  const t=this.value, map={
+    paper:{bg:'linear-gradient(180deg,#f7f3ea,#f0e9dc)',ink:'#1f1712',pagebg:'rgba(255,255,255,0.63)'},
+    night:{bg:'linear-gradient(180deg,#131427,#2e223a)',ink:'#f7f3ea',pagebg:'rgba(12,12,20,0.55)'},
+    gold:{bg:'linear-gradient(180deg,#f7e7b0,#f7f3ea)',ink:'#7a5a28',pagebg:'rgba(255,255,255,0.70)'},
+    silver:{bg:'linear-gradient(180deg,#e7eaf5,#fafbfd)',ink:'#23253a',pagebg:'rgba(255,255,255,0.72)'}
+  };
+  document.body.style.background=map[t].bg; document.body.style.color=map[t].ink;
+  document.documentElement.style.setProperty("--ink",map[t].ink);
+  document.documentElement.style.setProperty("--page-bg",map[t].pagebg);
+  saveSettings();
+};
+
+$("shortcutsBtn").onclick = ()=> openModal("shortcutsModal");
+$("trackChangesBtn").onclick = function(){ tracking=!tracking; this.classList.toggle("active"); this.innerHTML=tracking?"📝 Tracking":"🔍 Track"; saveSettings(); };
+$("translateBtn").onclick = ()=> openModal("translateModal");
+$("saveNowBtn").onclick = ()=> saveDoc(true);
+
+/* ===========================
+   TOOLBAR BUILD
+   =========================== */
+const FONT_OPTIONS=[
+  {label:"Cinzel (Sacred Serif)", value:"'Cinzel', Georgia, 'Times New Roman', serif"},
+  {label:"Aboreto (Art Deco)", value:"'Aboreto', 'Cormorant Garamond', Georgia, serif"},
+  {label:"PROSE Brand — Cormorant Garamond", value:"'Cormorant Garamond', Cormorant, Garamond, Georgia, 'Times New Roman', serif"},
+  {label:"Inter (Modern UI Sans)", value:"Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif"},
+  {label:"Lora (Elegant Serif)", value:"Lora, Georgia, 'Times New Roman', Times, serif"},
+  {label:"Merriweather (Serif)", value:"Merriweather, Georgia, 'Times New Roman', Times, serif"},
+  {label:"Playfair Display (Display Serif)", value:"'Playfair Display', Georgia, 'Times New Roman', Times, serif"},
+  {label:"Roboto Slab (Slab Serif)", value:"'Roboto Slab', 'Times New Roman', Times, serif"},
+  {label:"Poppins (Rounded Sans)", value:"Poppins, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif"},
+  {label:"Montserrat (Geometric Sans)", value:"Montserrat, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif"},
+  {label:"Nunito (Friendly Sans)", value:"Nunito, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif"},
+  {label:"System Sans", value:"ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif"},
+  {label:"System Serif", value:"ui-serif, Georgia, 'Times New Roman', Times, serif"},
+  {label:"Georgia", value:"Georgia, serif"},
+  {label:"Times New Roman", value:"'Times New Roman', Times, serif"},
+  {label:"Baskerville / Didot", value:"Baskerville, Didot, 'Times New Roman', Times, serif"},
+  {label:"Garamond", value:"Garamond, 'Times New Roman', serif"},
+  {label:"Palatino / Book Antiqua", value:"Palatino, 'Palatino Linotype', 'Book Antiqua', serif"},
+  {label:"Helvetica Neue / Helvetica / Arial", value:"'Helvetica Neue', Helvetica, Arial, ui-sans-serif, system-ui, -apple-system, 'Segoe UI'"},
+  {label:"Verdana", value:"Verdana, Geneva, sans-serif"},
+  {label:"Tahoma", value:"Tahoma, Geneva, sans-serif"},
+  {label:"Trebuchet MS", value:"'Trebuchet MS', Helvetica, sans-serif"},
+  {label:"Gill Sans", value:"'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif"},
+  {label:"Avenir Next / Avenir", value:"'Avenir Next', Avenir, 'Segoe UI', system-ui, -apple-system, sans-serif"},
+  {label:"IBM Plex Mono (Mono)", value:"'IBM Plex Mono', Consolas, Menlo, Monaco, 'Courier New', monospace"},
+  {label:"Fira Code (Mono)", value:"'Fira Code', Consolas, Menlo, Monaco, 'Courier New', monospace"},
+  {label:"Consolas / Menlo / Monaco (Mono)", value:"Consolas, Menlo, Monaco, 'Courier New', monospace"},
+  {label:"Courier New (Mono)", value:"'Courier New', Courier, monospace"}
+];
+const SIZE_PRESETS=[{label:"Small (A)",px:14},{label:"Normal",px:18},{label:"Large (A+)",px:22},{label:"Huge (A++)",px:27}];
+const PX_SIZES=[12,13,14,15,16,17,18,19,20,21,22,24,26,27,28,30,33,36,40,44,48,54,60,66,72];
+
+function buildToolbar(){
+  $("clusterFormat").innerHTML=`
+    <button class="btn-mini" id="undoBtn">⟲</button>
+    <button class="btn-mini" id="redoBtn">⟳</button>
+    <button class="btn-mini" id="boldBtn"><b>B</b></button>
+    <button class="btn-mini" id="italicBtn"><i>I</i></button>
+    <button class="btn-mini" id="underlineBtn"><u>U</u></button>
+    <button class="btn-mini" id="strikeBtn">S̶</button>
+    <button class="btn-mini" id="removeFormatBtn">✖</button>`;
+
+  const fontOpts = FONT_OPTIONS.map(f=>`<option value="${escapeHtml(f.value)}">${escapeHtml(f.label)}</option>`).join("");
+  const presetOpts = SIZE_PRESETS.map(p=>`<option value="${p.px}">${escapeHtml(p.label)}</option>`).join("");
+  const pxOpts = PX_SIZES.map(px=>`<option value="${px}">${px}px</option>`).join("");
+
+  $("clusterFont").innerHTML=`
+    <div class="font-face">
+      <button class="btn-mini" id="fontFaceBtn" aria-haspopup="listbox" aria-expanded="false" title="Choose font">
+        <span id="fontFaceLabel" style="display:inline-block; min-width:180px; text-align:left;">Font</span> ▾
+      </button>
+      <div id="fontMenu" class="font-menu hidden" role="listbox" aria-label="Fonts"></div>
+    </div>
+    <button class="btn-mini" id="caseBtn" title="Change case (cycle: lower → UPPER → Title → Sentence)">Aa</button>
+    <button class="btn-mini" id="fontPreviewBtn" title="Toggle font preview">👁</button>
+    <select id="sizePreset" class="input-mini" title="Size preset">${presetOpts}</select>
+    <button class="btn-mini" id="sizeDown" title="Smaller (A−)">A−</button>
+    <button class="btn-mini" id="sizeUp" title="Bigger (A+)">A+</button>
+    <button class="btn-mini" id="advancedToggle" title="Advanced sizes">Advanced</button>
+    <select id="fontSizeSelect" class="input-mini" title="Advanced px sizes" style="display:none;">${pxOpts}</select>
+    <input type="color" id="colorPicker" class="color-mini" title="Text Color">
+    <input type="color" id="highlightPicker" class="color-mini" title="Highlight" value="#fff59d">`;
+
+  $("clusterAlign").innerHTML=`
+    <button class="btn-mini" id="alignLeftBtn">⬅</button>
+    <button class="btn-mini" id="alignCenterBtn">↔</button>
+    <button class="btn-mini" id="alignRightBtn">➡</button>
+    <button class="btn-mini" id="alignJustifyBtn">☰</button>
+    <button class="btn-mini" id="ulBtn">•</button>
+    <button class="btn-mini" id="olBtn">1.</button>
+    <button class="btn-mini" id="indentInc">⤓</button>
+    <button class="btn-mini" id="indentDec">⤒</button>
+    <button class="btn-mini" id="blockquoteBtn">❝</button>
+    <button class="btn-mini" id="hrBtn">━</button>`;
+
+  $("clusterInsert").innerHTML=`
+    <button class="btn-mini" id="supBtn">x<sup>2</sup></button>
+    <button class="btn-mini" id="subBtn">x<sub>2</sub></button>
+    <button class="btn-mini" id="tableBtn">▦</button>
+    <button class="btn-mini" id="codeBtn">{ }</button>
+    <button class="btn-mini" id="linkBtn">🔗</button>
+    <button class="btn-mini" id="insertImageBtn">🖼</button>
+    <button class="btn-mini" id="uploadImageBtn">⬆︎🖼</button>
+    <input id="imageFileInput" type="file" accept="image/*" style="display:none;">
+    <button class="btn-mini" id="copyBtn">⧉</button>
+    <button class="btn-mini" id="pasteBtn">⧠</button>`;
+
+  $("clusterTools").innerHTML=`
+    <button class="btn-mini" id="findReplaceBtn">🔎</button>
+    <button class="btn-mini" id="commentBtn">💬</button>
+    <button class="btn-mini" id="snippetBtn">📋</button>
+    <button class="btn-mini" id="tocBtn">☰TOC</button>
+    <button class="btn-mini" id="goalsBtn">🎯</button>
+    <button class="btn-mini" id="footnoteBtn">[fn]</button>
+    <button class="btn-mini" id="thesaurusBtn">Syn</button>
+    <button class="btn-mini" id="exportBtn">⇩</button>
+    <button class="btn-mini" id="aureonToolbarBtn">AI</button>`;
+
+  $("clusterLayout").innerHTML=`
+    <button class="btn-mini" id="rulerBtn">Ruler</button>
+    <select id="presetSelect" class="input-mini">
+      <option value="default" selected>Preset: Default</option>
+      <option value="report">Preset: Report</option>
+      <option value="letter">Preset: Letter</option>
+      <option value="resume">Preset: Resume</option>
+      <option value="legal">Preset: Legal Brief</option>
+    </select>
+    <select id="borderSelect" class="input-mini">
+      <option value="thin" selected>Border: Thin</option>
+      <option value="none">Border: None</option>
+      <option value="double">Border: Double</option>
+      <option value="bold">Border: Bold</option>
+    </select>
+    <label class="label">Width</label>
+    <input id="widthRange" type="range" min="740" max="1280" value="980" style="height:28px;">
+    <label class="label">Indent</label>
+    <input id="indentRange" type="range" min="0" max="120" value="0" style="height:28px;">
+    <label class="label">First</label>
+    <input id="firstIndentRange" type="range" min="0" max="90" value="0" style="height:28px;">
+    <label class="label">Margins</label>
+    <input id="marginLeftRange" type="range" min="0" max="240" value="72" style="height:28px;">
+    <input id="marginRightRange" type="range" min="0" max="240" value="72" style="height:28px;">
+    <button class="btn-mini" id="addTabBtn">+ Tab</button>
+    <button class="btn-mini" id="clearTabsBtn">Clear Tabs</button>
+    <label class="label">Snap</label>
+    <select id="tabSnapSelect" class="input-mini"><option value="5">5px</option><option value="10" selected>10px</option><option value="14">14px</option><option value="18">18px</option><option value="24">24px</option></select>`;
+}
+
+buildToolbar();
+// NEW: ensure sticky selection listeners are attached after toolbar is created
+wireStickySelectionControls();
+// Ensure all toolbar buttons don't act like implicit submits — force type=button so focus/caret doesn't jump
+try{ document.querySelectorAll('button:not([type])').forEach(b=> b.type='button'); }catch(_){}
+// (select-based preview removed — using custom menu that renders each item in its own font)
+
+/* ===========================
+   FONT + SIZE (ADVANCED FIX)
+   =========================== */
+// ---- Custom Font Menu (each item renders in its own font) ----
+function buildFontMenu(){
+  const menu=$("fontMenu"); if(!menu) return;
+  menu.innerHTML = FONT_OPTIONS.map(f=>{
+    const family = escapeHtml(f.value);
+    const label  = escapeHtml(primaryFontName(f.value));
+    return `<div class="font-item" role="option" data-value="${family}" data-label="${label}" style="font-family:${family}">${label}</div>`;
+  }).join("");
+}
+function updateFontFaceUI(value){
+  const v = value || getComputedStyle(editorEl).fontFamily || FONT_OPTIONS[0].value;
+  const lab = primaryFontName(v) || 'Font';
+  const el=$("fontFaceLabel"); if(el){ el.textContent = lab; el.style.fontFamily = v; }
+  $$('#fontMenu .font-item').forEach(it=> it.classList.toggle('active', it.dataset.value===v));
+}
+function openFontMenu(open){
+  const m=$("fontMenu"), b=$("fontFaceBtn"); if(!m||!b) return;
+  const will=open===undefined? m.classList.contains('hidden') : !!open;
+  m.classList.toggle('hidden', !will);
+  b.setAttribute('aria-expanded', will? 'true':'false');
+}
+// Build and wire
+buildFontMenu();
+updateFontFaceUI(loadSettings().editorFont||'');
+const fontBtn=$("fontFaceBtn");
+if(fontBtn){
+  // Open on mousedown to prevent the editor from losing selection focus
+  fontBtn.addEventListener('mousedown', (e)=>{
+    e.preventDefault();
+    restoreRange();
+    openFontMenu(true);
+  }, true);
+  // Keep click as a keyboard-accessible fallback
+  fontBtn.addEventListener('click', (e)=>{
+    e.preventDefault();
+    restoreRange();
+    openFontMenu(true);
+  });
+}
+const fontMenu=$("fontMenu");
+if(fontMenu){
+  fontMenu.addEventListener('mousedown', ()=>restoreRange(), true);
+  fontMenu.addEventListener('click', (e)=>{
+    const item=e.target.closest('.font-item'); if(!item) return;
+    const value=item.dataset.value; applyFontFamilyToSelection(value); updateFontFaceUI(value); openFontMenu(false); saveSettings();
+  });
+}
+document.addEventListener('click', (e)=>{ if(!e.target.closest('.font-face')) openFontMenu(false); });
+// --------------------------------------------------------------
+let fontPreviewOn=false; $("fontPreviewBtn").onclick=()=>{ fontPreviewOn=!fontPreviewOn; $("fontPreviewBtn").classList.toggle("active",fontPreviewOn); editorEl.dataset.fontPreview=fontPreviewOn?"on":"off"; };
+function setRootFont(px){ document.documentElement.style.setProperty("--page-font-size", px+"px"); saveSettings(); }
+function wrapSelectionWithSpan(styleObj){
+  restoreRange();
+  const sel = window.getSelection();
+  if(!sel || !sel.rangeCount) return false;
+  const range = sel.getRangeAt(0);
+  if(!editorEl.contains(range.commonAncestorContainer)) return false;
+  const frag = range.extractContents();
+  const span = document.createElement("span");
+  Object.assign(span.style, styleObj);
+  span.appendChild(frag);
+  range.insertNode(span);
+  sel.removeAllRanges();
+  const newRange = document.createRange();
+  newRange.selectNodeContents(span);
+  sel.addRange(newRange);
+  saveRange();
+  return true;
+}
+async function applyFontFamilyToSelection(fontFamily){
+  // Try to load the chosen font (when available via the <link>), then apply
+  const loaded = await ensureFontLoaded(fontFamily);
+  if(!wrapSelectionWithSpan({fontFamily})){
+    editorEl.style.fontFamily = fontFamily; // base for new typing
+  }
+  saveDoc();
+  showToast(loaded ? 'Font applied ✓' : 'Applied (fallback — font not loaded)');
+}
+
+function applyFontSizePxToSelection(px){ restoreRange(); const sel=window.getSelection(); if(!sel||!sel.rangeCount){ setRootFont(px); return; } const range=sel.getRangeAt(0); if(!editorEl.contains(range.commonAncestorContainer)){ setRootFont(px); return; } if(range.collapsed){ setRootFont(px); return; } document.execCommand("fontSize", false, "7"); editorEl.querySelectorAll('font[size="7"]').forEach(f=>{ const span=document.createElement("span"); span.style.fontSize = px + "px"; span.innerHTML = f.innerHTML; f.replaceWith(span); }); saveRange(); saveDoc(); }
+if($("fontSelect")){
+  $("fontSelect").onchange=function(){ applyFontFamilyToSelection(this.value).then(()=>saveSettings()); };
+} // safeguard for older builds
+$("sizePreset").onchange=function(){ const px=parseInt(this.value)||18; applyFontSizePxToSelection(px); saveSettings(); };
+function getCurrentBasePx(){ const v=getComputedStyle(document.documentElement).getPropertyValue("--page-font-size").trim(); return parseInt(v)||18; }
+$("sizeDown").onclick=()=>{ const steps=[12,13,14,15,16,17,18,19,20,21,22,24,26,27,28,30,33,36,40,44,48,54,60,66,72]; const cur=getCurrentBasePx(); const idx=steps.indexOf(cur); const next=idx>0?steps[idx-1]:steps[0]; setRootFont(next); const preset=SIZE_PRESETS.find(p=>p.px===next); if(preset) $("sizePreset").value=String(next); };
+$("sizeUp").onclick=()=>{ const steps=[12,13,14,15,16,17,18,19,20,21,22,24,26,27,28,30,33,36,40,44,48,54,60,66,72]; const cur=getCurrentBasePx(); const idx=steps.indexOf(cur); const next=idx>=0 && idx<steps.length-1?steps[idx+1]:steps[steps.length-1]; setRootFont(next); const preset=SIZE_PRESETS.find(p=>p.px===next); if(preset) $("sizePreset").value=String(next); };
+let advancedOn=false; $("advancedToggle").onclick=()=>{ advancedOn=!advancedOn; $("advancedToggle").classList.toggle("active",advancedOn); $("fontSizeSelect").style.display=advancedOn?"":"none"; if(advancedOn){ const fs=$("fontSizeSelect"); if(fs){ fs.value=String(getCurrentBasePx()); } } };
+$("fontSizeSelect").onchange=function(){ const px=parseInt(this.value)||18; applyFontSizePxToSelection(px); saveSettings(); };
+$("colorPicker").onchange=function(){ exec("foreColor", this.value); };
+$("highlightPicker").onchange=function(){ try{ exec("hiliteColor", this.value); }catch(e){ exec("backColor", this.value); } };
+
+/* ===========================
+   BASIC FORMATTING
+   =========================== */
+$("undoBtn").onclick=()=>exec("undo"); $("redoBtn").onclick=()=>exec("redo"); $("removeFormatBtn").onclick=()=>exec("removeFormat");
+
+// Bind formatting on early pointerdown/mousedown so selection never gets lost
+function bindExecButton(id, cmd){
+  const el = $(id);
+  if(!el) return;
+  // Preserve selection so the highlight doesn't collapse
+  el.addEventListener('mousedown', (e)=>{ e.preventDefault(); restoreRange(); }, true);
+  // Apply once on click (prevents double-fire flip-back)
+  el.addEventListener('click', (e)=>{
+    e.preventDefault();
+    exec(cmd);
+    editorEl.focus();
+    saveRange();
+    updateToolbarState();
+  });
+}
+bindExecButton('boldBtn','bold');
+bindExecButton('italicBtn','italic');
+bindExecButton('underlineBtn','underline');
+bindExecButton('strikeBtn','strikeThrough');
+$("alignLeftBtn").onclick=()=>exec("justifyLeft"); $("alignCenterBtn").onclick=()=>exec("justifyCenter"); $("alignRightBtn").onclick=()=>exec("justifyRight"); $("alignJustifyBtn").onclick=()=>exec("justifyFull"); $("ulBtn").onclick=()=>exec("insertUnorderedList"); $("olBtn").onclick=()=>exec("insertOrderedList"); $("indentInc").onclick=()=>exec("indent"); $("indentDec").onclick=()=>exec("outdent"); $("blockquoteBtn").onclick=()=>exec("formatBlock","blockquote"); $("hrBtn").onclick=()=>exec("insertHorizontalRule");
+$("supBtn").onclick=()=>exec("superscript"); $("subBtn").onclick=()=>exec("subscript");
+$("codeBtn").onclick=()=>{ restoreRange(); document.execCommand("insertHTML", false, "<pre><code>Code</code></pre>"); editorEl.focus(); saveRange(); };
+$("tableBtn").onclick=()=>{ let rows=prompt("Rows?","2"), cols=prompt("Columns?","2"); rows=Math.max(1,parseInt(rows)||2); cols=Math.max(1,parseInt(cols)||2); let html="<table style='border-collapse:collapse;width:100%;margin:10px 0;border:1px solid rgba(0,0,0,0.18);'>"; for(let i=0;i<rows;i++){ html+="<tr>"; for(let j=0;j<cols;j++){ html+="<td style='padding:10px;border:1px solid rgba(0,0,0,0.18);'>&nbsp;</td>"; } html+="</tr>"; } html+="</table>"; restoreRange(); document.execCommand("insertHTML", false, html); editorEl.focus(); saveRange(); };
+$("linkBtn").onclick=()=>{ const url=prompt("Enter URL:"); if(!url) return; exec("createLink",url); };
+$("insertImageBtn").onclick=()=>{ const url=prompt("Paste image URL:"); if(!url) return; restoreRange(); document.execCommand("insertImage", false, url); editorEl.focus(); saveRange(); };
+$("uploadImageBtn").onclick=()=>$("imageFileInput").click();
+$("imageFileInput").onchange=(e)=>{ const file=e.target.files&&e.target.files[0]; if(!file||!file.type.startsWith("image/")) return; const reader=new FileReader(); reader.onload=(ev)=>{ restoreRange(); document.execCommand("insertImage", false, ev.target.result); editorEl.focus(); saveRange(); }; reader.readAsDataURL(file); e.target.value=""; };
+$("copyBtn").onclick=async ()=>{ try{ const sel=window.getSelection().toString(); const text=sel||editorEl.innerText; await navigator.clipboard.writeText(text); }catch(e){ exec("copy"); } };
+$("pasteBtn").onclick=async ()=>{ try{ const text=await navigator.clipboard.readText(); restoreRange(); document.execCommand("insertText", false, text); editorEl.focus(); saveRange(); }catch(e){ alert("Paste blocked by browser permissions. Use Ctrl/Cmd+V."); } };
+editorEl.ondragover=(e)=>{ e.preventDefault(); };
+editorEl.ondrop=(e)=>{ e.preventDefault(); const file=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0]; if(!file||!file.type.startsWith("image/")) return; const reader=new FileReader(); reader.onload=(ev)=>{ restoreRange(); document.execCommand("insertImage", false, ev.target.result); editorEl.focus(); saveRange(); }; reader.readAsDataURL(file); };
+
+/* ===========================
+   PRO TOOLS WIRING (robust + sidebar-safe)
+   =========================== */
+// Safer binding: tolerate duplicates/missing IDs and use delegation so sidebar always works
+function bindClick(id, fn){ const el=$(id); if(el) el.addEventListener('click', fn); }
+const openBy = (name)=>()=> openModal(name);
+
+// Direct binds (if elements exist)
+bindClick('findReplaceBtn', openBy('findReplaceModal'));
+bindClick('showFindReplaceBtn', openBy('findReplaceModal'));
+bindClick('commentBtn', openBy('commentModal'));
+bindClick('showCommentBtn', openBy('commentModal'));
+bindClick('snippetBtn', openBy('templatesModal'));
+bindClick('showTemplatesBtn', openBy('templatesModal'));
+bindClick('tocBtn', openBy('tocModal'));
+bindClick('showTOCBtn', openBy('tocModal'));
+bindClick('goalsBtn', openBy('goalsModal'));
+bindClick('showGoalsBtn', openBy('goalsModal'));
+bindClick('footnoteBtn', openBy('footnoteModal'));
+bindClick('showFootnoteBtn', openBy('footnoteModal'));
+bindClick('thesaurusBtn', openBy('thesaurusModal'));
+bindClick('showThesaurusBtn', openBy('thesaurusModal'));
+bindClick('exportBtn', openBy('exportModal'));
+bindClick('showExportBtn', openBy('exportModal'));
+bindClick('showRestoreBtn', openBy('restoreModal'));
+bindClick('showVersionsBtn', openBy('versionsModal'));
+
+// AI panel (IDs are duplicated in header/tools; delegation covers both)
+bindClick('aureonBtn', toggleAureonPanel);
+// Don't rely solely on getElementById because of duplicate ids for 'aureonToolbarBtn'
+
+// Global delegation: works for all current + future sidebar/header buttons
+const clickMap = {
+  findReplaceBtn: ()=>openModal('findReplaceModal'),
+  showFindReplaceBtn: ()=>openModal('findReplaceModal'),
+  commentBtn: ()=>openModal('commentModal'),
+  showCommentBtn: ()=>openModal('commentModal'),
+  snippetBtn: ()=>openModal('templatesModal'),
+  showTemplatesBtn: ()=>openModal('templatesModal'),
+  tocBtn: ()=>openModal('tocModal'),
+  showTOCBtn: ()=>openModal('tocModal'),
+  goalsBtn: ()=>openModal('goalsModal'),
+  showGoalsBtn: ()=>openModal('goalsModal'),
+  footnoteBtn: ()=>openModal('footnoteModal'),
+  showFootnoteBtn: ()=>openModal('footnoteModal'),
+  thesaurusBtn: ()=>openModal('thesaurusModal'),
+  showThesaurusBtn: ()=>openModal('thesaurusModal'),
+  exportBtn: ()=>openModal('exportModal'),
+  showExportBtn: ()=>openModal('exportModal'),
+  showRestoreBtn: ()=>openModal('restoreModal'),
+  showVersionsBtn: ()=>openModal('versionsModal'),
+  aureonToolbarBtn: ()=>toggleAureonPanel(),
+  aureonBtn: ()=>toggleAureonPanel(),
+  closeAureon: ()=>$('aureonPanel').classList.add('hidden')
+};
+
+document.addEventListener('click', (e)=>{
+  const t = e.target.closest('button');
+  if(!t) return;
+  const fn = clickMap[t.id];
+  if(typeof fn === 'function'){ e.preventDefault(); fn(); }
+});
+
+// Explicit sidebar-only safety net (in case of editor wrappers in Wix)
+document.querySelector('.sidebar')?.addEventListener('click', (e)=>{
+  const id = e.target.id;
+  const map = {
+    showFindReplaceBtn:'findReplaceModal',
+    showCommentBtn:'commentModal',
+    showTemplatesBtn:'templatesModal',
+    showGoalsBtn:'goalsModal',
+    showFootnoteBtn:'footnoteModal',
+    showThesaurusBtn:'thesaurusModal',
+    showExportBtn:'exportModal',
+    showRestoreBtn:'restoreModal',
+    showVersionsBtn:'versionsModal'
+  };
+  if(map[id]){ openModal(map[id]); }
+});
+
+/* ===========================
+   OUTLINE + TOC
+   =========================== */
+function updateStructure(){ const headings = $$("#editor h1, #editor h2, #editor h3"); const map=$("docStructure"); if(!map) return; map.innerHTML=""; headings.forEach(h=>{ const div=document.createElement("div"); div.innerText=h.innerText||h.textContent||"(untitled)"; div.onclick=()=> h.scrollIntoView({behavior:"smooth", block:"start"}); div.style.fontWeight="bold"; div.style.fontSize=(13+4*(4-parseInt(h.tagName[1],10)))+"px"; map.appendChild(div); }); }
+editorEl.addEventListener("input", updateStructure);
+function buildTOC(){ let toc=""; const hs=$$("#editor h1, #editor h2, #editor h3"); hs.forEach((h,i)=>{ const level=parseInt(h.tagName[1],10); const id=`section${i}`; h.id=id; toc+=`<div style="margin-left:${(level-1)*14}px; padding:4px 0;"><a href="#${id}">${escapeHtml(h.innerText||h.textContent||"Section")}</a></div>`; }); return toc; }
+$("showTOCBtn").onclick=()=>{ $("tocContent").innerHTML = buildTOC() || "<div style='text-align:center;'>No headings found.</div>"; openModal("tocModal"); };
+$("insertTOCBtn").onclick=()=>{ const toc=buildTOC(); restoreRange(); document.execCommand("insertHTML", false, `<div style="border:1px solid rgba(0,0,0,0.12); padding:12px; border-radius:9px; margin:10px 0;"><div style="font-family:var(--title-font); color:var(--accent); text-align:center; margin-bottom:8px; font-weight:700;">Table of Contents</div>${toc||"<div>No headings yet.</div>"}</div>`); editorEl.focus(); saveRange(); closeModals(); };
+
+/* ===========================
+   GOALS + PROGRESS
+   =========================== */
+let goals={word:0,char:0,time:0}; if(localStorage.getItem(STORE.goals)){ try{ goals=JSON.parse(localStorage.getItem(STORE.goals))||goals; }catch(e){} }
+function updateGoalBar(){ const txt=(editorEl.innerText||"").trim(); const words=txt?txt.split(/\s+/).filter(Boolean).length:0; const chars=txt.length; const pctW=goals.word?Math.min(100,(words/goals.word)*100):0; const pctC=goals.char?Math.min(100,(chars/goals.char)*100):0; const pct=Math.max(pctW,pctC); $("goalBar").innerHTML=`<div class="goal-progress" style="width:${pct}%;"></div><div class="goal-label">Words: ${words}/${goals.word||"—"}, Chars: ${chars}/${goals.char||"—"}</div>`; }
+$("setGoalsBtn").onclick=()=>{ goals.word=parseInt($("wordGoalInput").value)||0; goals.char=parseInt($("charGoalInput").value)||0; goals.time=parseInt($("timeGoalInput").value)||0; localStorage.setItem(STORE.goals, JSON.stringify(goals)); closeModals(); updateGoalBar(); };
+$("clearGoalsBtn").onclick=()=>{ goals={word:0,char:0,time:0}; localStorage.setItem(STORE.goals, JSON.stringify(goals)); $("wordGoalInput").value=""; $("charGoalInput").value=""; $("timeGoalInput").value=""; updateGoalBar(); };
+let goalTimer=null; editorEl.addEventListener("input", ()=>{ clearTimeout(goalTimer); goalTimer=setTimeout(updateGoalBar,180); }); updateGoalBar();
+
+/* ===========================
+   WORD BANK
+   =========================== */
+let wordBank=[]; try{ wordBank=JSON.parse(localStorage.getItem(STORE.wordbank)||"[]"); }catch(e){}
+function renderWordBank(){ const el=$("wordBank"); if(!el) return; el.innerHTML = wordBank.length ? wordBank.map(w=>`<span style="margin:0 4px;">${escapeHtml(w)}</span>`).join("•") : "<span style='opacity:.7;'>Empty</span>"; }
+function addSelectedWord(){ const sel=window.getSelection().toString().trim(); if(!sel) return; const w=sel.split(/\s+/)[0].replace(/[^\w'-]/g,"").trim(); if(!w) return; if(!wordBank.includes(w)){ wordBank.push(w); localStorage.setItem(STORE.wordbank, JSON.stringify(wordBank)); renderWordBank(); } }
+window.addSelectedWord = addSelectedWord;
+function clearWordBank(){ if(!confirm("Clear Word Bank?")) return; wordBank=[]; localStorage.setItem(STORE.wordbank, "[]"); renderWordBank(); }
+window.clearWordBank = clearWordBank; renderWordBank();
+
+/* ===========================
+   FIND & REPLACE (SAFER)
+   =========================== */
+function removeFindHighlights(){ const marks=$$("#editor mark.prose-mark"); marks.forEach(m=>{ const parent=m.parentNode; if(!parent) return; parent.replaceChild(document.createTextNode(m.textContent), m); parent.normalize(); }); }
+function escapeRegExp(s){ return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
+$("findBtn").onclick=()=>{ const q=($("findInput").value||"").trim(); if(!q) return; removeFindHighlights(); const re=new RegExp(escapeRegExp(q),"gi"); let count=0; const walker=document.createTreeWalker(editorEl, NodeFilter.SHOW_TEXT, { acceptNode:(node)=>{ if(!node.nodeValue) return NodeFilter.FILTER_REJECT; if(!re.test(node.nodeValue)) return NodeFilter.FILTER_REJECT; return NodeFilter.FILTER_ACCEPT; } }); const toProcess=[]; while(walker.nextNode()) toProcess.push(walker.currentNode); toProcess.forEach(textNode=>{ const txt=textNode.nodeValue; const frag=document.createDocumentFragment(); let lastIndex=0; txt.replace(re,(m,idx)=>{ const start=idx; const end=idx+m.length; frag.appendChild(document.createTextNode(txt.slice(lastIndex,start))); const mark=document.createElement("mark"); mark.className="prose-mark"; mark.textContent=txt.slice(start,end); frag.appendChild(mark); lastIndex=end; count++; return m; }); frag.appendChild(document.createTextNode(txt.slice(lastIndex))); textNode.parentNode.replaceChild(frag,textNode); }); $("findResult").innerText = count? `${count} match(es) highlighted.` : "No matches."; };
+$("clearFindBtn").onclick=()=>{ removeFindHighlights(); $("findResult").innerText=""; };
+$("replaceBtn").onclick=()=>{ const find=($("findInput").value||""); const rep=($("replaceInput").value||""); if(!find) return; removeFindHighlights(); editorEl.innerHTML = editorEl.innerHTML.replace(find, rep); saveDoc(); };
+$("replaceAllBtn").onclick=()=>{ const find=($("findInput").value||""); const rep=($("replaceInput").value||""); if(!find) return; removeFindHighlights(); const re=new RegExp(escapeRegExp(find),"g"); editorEl.innerHTML = editorEl.innerHTML.replace(re, rep); saveDoc(); };
+
+/* ===========================
+   COMMENTS (LOCAL)
+   =========================== */
+let comments=[]; try{ comments=JSON.parse(localStorage.getItem(STORE.comments)||"[]"); }catch(e){ comments=[]; }
+function saveComments(){ localStorage.setItem(STORE.comments, JSON.stringify(comments)); renderComments(); }
+function renderComments(){ $("commentList").innerHTML = comments.map((c,i)=>`<div style="margin-bottom:8px; border-bottom:1px solid rgba(0,0,0,0.07); padding-bottom:6px;"><div>${escapeHtml(c)}</div><div style="text-align:center; margin-top:6px;"><button onclick="deleteComment(${i})" style="border:1px solid rgba(0,0,0,0.11); padding:4px 8px; border-radius:7px; cursor:pointer;">✖</button></div></div>`).join("") || "<div style='text-align:center; opacity:.75;'>No comments yet.</div>"; }
+window.deleteComment = (i)=>{ comments.splice(i,1); saveComments(); };
+$("addCommentBtn").onclick=()=>{ const txt=($("newCommentInput").value||"").trim(); if(!txt) return; comments.push(`[${nowStamp()}] ${txt}`); $("newCommentInput").value=""; saveComments(); };
+renderComments();
+
+/* ===========================
+   TEMPLATES / SNIPPETS (LOCAL)
+   =========================== */
+let templates=[]; try{ templates=JSON.parse(localStorage.getItem(STORE.templates)||"[]"); }catch(e){ templates=[]; }
+function saveTemplates(){ localStorage.setItem(STORE.templates, JSON.stringify(templates)); renderTemplates(); }
+function renderTemplates(){ $("templateList").innerHTML = templates.map((t,i)=>`<div style="margin-bottom:10px; border-bottom:1px solid rgba(0,0,0,0.07); padding-bottom:8px;"><div style="white-space:pre-wrap;">${escapeHtml(t)}</div><div style="text-align:center; margin-top:8px; display:flex; gap:8px; justify-content:center; flex-wrap:wrap;"><button onclick="insertTemplate(${i})" style="border:1px solid rgba(0,0,0,0.11); padding:6px 10px; border-radius:9px; cursor:pointer;">Insert</button><button onclick="deleteTemplate(${i})" style="border:1px solid rgba(0,0,0,0.11); padding:6px 10px; border-radius:9px; cursor:pointer;">✖</button></div></div>`).join("") || "<div style='text-align:center; opacity:.75;'>No snippets yet.</div>"; }
+window.insertTemplate=(i)=>{ restoreRange(); document.execCommand("insertText", false, templates[i]); editorEl.focus(); saveRange(); closeModals(); saveDoc(); };
+window.deleteTemplate=(i)=>{ templates.splice(i,1); saveTemplates(); };
+$("addTemplateBtn").onclick=()=>{ const txt=($("newTemplateInput").value||"").trim(); if(!txt) return; templates.push(txt); $("newTemplateInput").value=""; saveTemplates(); };
+renderTemplates();
+
+/* ===========================
+   FOOTNOTES (LOCAL)
+   =========================== */
+let footnotes=[]; try{ footnotes=JSON.parse(localStorage.getItem(STORE.footnotes)||"[]"); }catch(e){ footnotes=[]; }
+function saveFootnotes(){ localStorage.setItem(STORE.footnotes, JSON.stringify(footnotes)); renderFootnotes(); }
+function renderFootnotes(){ $("footnoteList").innerHTML = footnotes.map((f,i)=>`<div><b>[${i+1}]</b> ${escapeHtml(f)}</div>`).join("") || "<div style='text-align:center; opacity:.75;'>No footnotes yet.</div>"; $("footnotes").innerHTML = footnotes.map((f,i)=>`<div>[${i+1}] ${escapeHtml(f)}</div>`).join(""); }
+$("addFootnoteBtn").onclick=()=>{ const txt=($("newFootnoteInput").value||"").trim(); if(!txt) return; footnotes.push(txt); const n=footnotes.length; restoreRange(); document.execCommand("insertHTML", false, `<span class="footnote-tag" title="${escapeHtml(txt)}">[${n}]</span>`); editorEl.focus(); saveRange(); $("newFootnoteInput").value=""; saveFootnotes(); saveDoc(); };
+renderFootnotes();
+
+/* ===========================
+   OFFLINE THESAURUS (Tiny)
+   =========================== */
+const OFFLINE_THESAURUS={
+  happy:["joyful","elated","cheerful","radiant","blissful","buoyant"],
+  sad:["melancholy","mournful","desolate","sorrowful","downcast","somber"],
+  angry:["irate","enraged","incensed","furious","wrathful"],
+  afraid:["fearful","timid","anxious","terrified","apprehensive"],
+  love:["affection","devotion","fondness","adoration","tenderness"],
+  hate:["dislike","loathing","detest","abhor","resent"],
+  big:["vast","immense","colossal","expansive","massive","sizable"],
+  small:["delicate","petite","compact","modest","miniature","tiny"],
+  fast:["swift","rapid","fleet","brisk","speedy","nimble"],
+  slow:["unhurried","measured","leisurely","gentle","gradual","sluggish"],
+  bright:["radiant","luminous","vivid","shimmering","brilliant","gleaming"],
+  dark:["shadowed","dim","murky","gloomy","dusky","obscure"],
+  calm:["serene","tranquil","peaceful","placid","still","composed"],
+  clear:["lucid","plain","evident","transparent","unambiguous","crystal"],
+  strong:["robust","solid","resilient","steady","sturdy","vigorous"],
+  weak:["fragile","feeble","frail","delicate","tenuous"],
+  beautiful:["lovely","stunning","elegant","radiant","exquisite","graceful"],
+  ugly:["unattractive","homely","unsightly","plain","hideous"],
+  smart:["clever","bright","intelligent","astute","sharp","savvy"],
+  wise:["sagacious","prudent","judicious","discerning","sage"],
+  brave:["courageous","valiant","bold","dauntless","intrepid"],
+  timid:["shy","bashful","retiring","diffident","meek"],
+  honest:["truthful","candid","sincere","upright","forthright"],
+  kind:["compassionate","warm","caring","tender","benevolent"],
+  generous:["giving","charitable","liberal","bountiful","openhanded"],
+  harsh:["severe","stern","austere","abrasive","grim"],
+  gentle:["soft","tender","kind","soothing","mild"],
+  loud:["noisy","boisterous","clamorous","rowdy","thunderous"],
+  quiet:["hushed","silent","mute","soft-spoken","tranquil"],
+  easy:["simple","effortless","straightforward","undemanding","manageable"],
+  hard:["difficult","arduous","challenging","tough","onerous"],
+  begin:["start","commence","initiate","launch","embark"],
+  end:["finish","conclude","terminate","complete","cease"],
+  improve:["enhance","refine","upgrade","better","boost"],
+  reduce:["decrease","diminish","lessen","curtail","trim"],
+  increase:["expand","amplify","raise","escalate","boost"],
+  important:["vital","crucial","essential","significant","pivotal"],
+  urgent:["pressing","immediate","critical","imperative","time-sensitive"],
+  simple:["plain","uncomplicated","straightforward","clear","basic"],
+  complex:["intricate","complicated","elaborate","multifaceted","nuanced"],
+  careful:["cautious","meticulous","scrupulous","attentive","prudent"],
+  careless:["reckless","negligent","sloppy","haphazard","heedless"],
+  creative:["imaginative","inventive","innovative","original","artful"],
+  dull:["boring","tedious","bland","drab","monotonous"],
+  rich:["wealthy","affluent","prosperous","opulent","well-off"],
+  poor:["impoverished","destitute","needy","indigent","penniless"],
+  safe:["secure","harmless","protected","risk-free","sound"],
+  risky:["dangerous","hazardous","dicey","precarious","unsafe"],
+  flexible:["adaptable","pliable","versatile","elastic","supple"],
+  rigid:["stiff","inflexible","unyielding","strict","immutable"],
+  robust:["strong","hardy","sturdy","resilient","sound"],
+  fragile:["delicate","brittle","breakable","frail","flimsy"],
+  transparent:["clear","lucent","pellucid","see-through","limpid"],
+  opaque:["clouded","murky","impenetrable","nontransparent","obscure"],
+  vivid:["brilliant","intense","vibrant","graphic","lively"],
+  subtle:["delicate","nuanced","faint","understated","refined"],
+  elegant:["graceful","refined","polished","stylish","tasteful"],
+  ornate:["elaborate","embellished","baroque","decorative","florid"],
+  minimal:["simple","spare","austere","pared-down","clean"],
+  dramatic:["theatrical","striking","sensational","vivid","stirring"],
+  serene:["calm","placid","tranquil","peaceful","unruffled"],
+  chaotic:["disordered","turbulent","tumultuous","wild","hectic"],
+  stable:["steady","firm","secure","constant","reliable"],
+  volatile:["unpredictable","explosive","fickle","capricious","unstable"],
+  precise:["exact","accurate","specific","definite","meticulous"],
+  vague:["ambiguous","indefinite","hazy","imprecise","unclear"]
+};
+function replaceSelectedWord(w){ restoreRange(); document.execCommand("insertText", false, w); editorEl.focus(); saveRange(); closeModals(); saveDoc(); }
+window.replaceSelectedWord=replaceSelectedWord;
+$("thesaurusInput").oninput=function(){ const word=(this.value||"").trim().toLowerCase(); if(word.length<2){ $("thesaurusResult").innerHTML=""; return; } const syns=OFFLINE_THESAURUS[word]||[]; $("thesaurusResult").innerHTML = syns.length? syns.map(s=>`<span style="display:inline-block;margin:6px;padding:6px 10px;border:1px solid rgba(0,0,0,0.12);border-radius:999px;cursor:pointer;" onclick="replaceSelectedWord('${escapeHtml(s)}')">${escapeHtml(s)}</span>`).join("") : "<div style='opacity:.75;'>No synonyms in offline set.</div>"; };
+
+/* ===========================
+   VERSIONS (LOCAL)
+   =========================== */
+let versions=[]; try{ versions=JSON.parse(localStorage.getItem(STORE.versions)||"[]"); }catch(e){ versions=[]; }
+function pushVersion(label="Auto"){ versions.push({ time: nowStamp(), label, title: titleEl.value||"Untitled", content: editorEl.innerHTML, settings: loadSettings() }); if(versions.length>30) versions.shift(); localStorage.setItem(STORE.versions, JSON.stringify(versions)); }
+function renderVersions(){ $("versionList").innerHTML = versions.slice().reverse().map((v,idxFromEnd)=>{ const i=versions.length-1-idxFromEnd; return `<div style="margin-bottom:10px;border-bottom:1px solid rgba(0,0,0,0.07);padding-bottom:8px;"><div style="text-align:center;"><b>${escapeHtml(v.time)}</b> · <span style="opacity:.8;">${escapeHtml(v.label||"Snapshot")}</span></div><div style="text-align:center; margin-top:4px; opacity:.9;">${escapeHtml(v.title||"Untitled")}</div><div style="text-align:center; margin-top:8px; display:flex; gap:8px; justify-content:center; flex-wrap:wrap;"><button onclick="restoreVersion(${i})" style="border:1px solid rgba(0,0,0,0.11); padding:6px 10px; border-radius:9px; cursor:pointer;">Restore</button><button onclick="deleteVersion(${i})" style="border:1px solid rgba(0,0,0,0.11); padding:6px 10px; border-radius:9px; cursor:pointer;">Delete</button></div></div>`; }).join("") || "<div style='text-align:center; opacity:.75;'>No versions saved yet.</div>"; }
+window.restoreVersion=(i)=>{ const v=versions[i]; if(!v) return; editorEl.innerHTML=v.content||""; titleEl.value=v.title||""; applySettings(v.settings||{}); closeModals(); saveDoc(true); updateStructure(); updateGoalBar(); };
+window.deleteVersion=(i)=>{ versions.splice(i,1); localStorage.setItem(STORE.versions, JSON.stringify(versions)); renderVersions(); };
+$("snapshotBtn").onclick=()=>{ pushVersion("Snapshot"); renderVersions(); };
+$("clearVersionsBtn").onclick=()=>{ if(!confirm("Clear all saved versions?")) return; versions=[]; localStorage.setItem(STORE.versions, "[]"); renderVersions(); };
+setInterval(()=>{ const hasText=(editorEl.innerText||"").trim().length>0; if(hasText) pushVersion("Auto"); },70000);
+renderVersions();
+
+/* ===========================
+   STARTERS
+   =========================== */
+const STARTERS={
+  report:`# Title\n\n## Executive Summary\n\n## Introduction\n\n## Body\n\n## Conclusion\n\n## References\n`,
+  letter:`Your Name\nYour Address\nCity, State ZIP\n\nDate\n\nRecipient Name\nRecipient Address\n\nDear [Name],\n\n[Write your letter here.]\n\nSincerely,\n\nYour Name\n`,
+  resume:`NAME\nCity, State · Email · Phone · Portfolio\n\nSUMMARY\n- \n\nEXPERIENCE\nRole — Company (Dates)\n- \n\nEDUCATION\nSchool — Degree\n\nSKILLS\n- \n`,
+  story:`Title\n\nThe first line should feel like a door opening.\n\n[Scene]\n\n[Character]\n\n[Conflict]\n\n`,
+  poem:`Title\n\nLine 1\nLine 2\nLine 3\n\n—\n\n(Shape your rhythm, then revise.)\n`
+};
+$("insertStarterBtn").onclick=()=> openModal("starterModal");
+$("doInsertStarter").onclick=()=>{ const key=$("starterSelect").value; const text=STARTERS[key]||""; if(!text) return; editorEl.focus(); const sel=window.getSelection(); let inserted=false; if(sel&&sel.rangeCount){ const range=sel.getRangeAt(0); if(editorEl.contains(range.commonAncestorContainer)){ range.collapse(false); range.insertNode(document.createTextNode("\n"+text+"\n")); inserted=true; } } if(!inserted){ editorEl.innerText += (editorEl.innerText.trim()?"\n\n":"") + text; } closeModals(); saveDoc(true); updateStructure(); updateGoalBar(); };
+
+/* ===========================
+   LAYOUT: RULER + INDENTS + BORDER + PRESETS
+   =========================== */
+function setBorderMode(mode){ if(mode==="none") document.documentElement.style.setProperty("--page-border","1px solid rgba(0,0,0,0.00)"); else if(mode==="double") document.documentElement.style.setProperty("--page-border","3px double rgba(0,0,0,0.18)"); else if(mode==="bold") document.documentElement.style.setProperty("--page-border","2px solid rgba(0,0,0,0.22)"); else document.documentElement.style.setProperty("--page-border","1px solid rgba(0,0,0,0.08)"); saveSettings(); }
+$("borderSelect").onchange=function(){ setBorderMode(this.value); };
+function setPageWidth(px){ document.documentElement.style.setProperty("--page-max-width", px+"px"); saveSettings(); }
+$("widthRange").oninput=function(){ setPageWidth(parseInt(this.value)||980); };
+function setIndents(leftPx, firstPx){ document.documentElement.style.setProperty("--indent-left", (leftPx|0)+"px"); document.documentElement.style.setProperty("--indent-first", (firstPx|0)+"px"); positionRulerMarkers(); saveSettings(); }
+$("indentRange").oninput=function(){ setIndents(parseInt(this.value)||0, parseInt($("firstIndentRange").value)||0); };
+$("firstIndentRange").oninput=function(){ setIndents(parseInt($("indentRange").value)||0, parseInt(this.value)||0); };
+function positionRulerMarkers(){
+  const w=pageEl.getBoundingClientRect().width||980;
+  const pad=10; const maxX=w-pad*2;
+  const left=parseInt(getComputedStyle(document.documentElement).getPropertyValue("--indent-left"))||0;
+  const first=parseInt(getComputedStyle(document.documentElement).getPropertyValue("--indent-first"))||0;
+  const mL=parseInt(getComputedStyle(document.documentElement).getPropertyValue("--margin-left"))||0;
+  const mR=parseInt(getComputedStyle(document.documentElement).getPropertyValue("--margin-right"))||0;
+  const leftX=Math.min(maxX,Math.max(0,mL+left))+pad;
+  const firstX=Math.min(maxX,Math.max(0,mL+left+first))+pad;
+  const mLX=Math.min(maxX,Math.max(0,mL))+pad;
+  const mRX=Math.min(maxX,Math.max(0,maxX-mR))+pad;
+  const ml=$("markerMarginLeft"), mr=$("markerMarginRight"), l=$("markerLeft"), f=$("markerFirst");
+  if(l) l.style.left=leftX+"px";
+  if(f) f.style.left=firstX+"px";
+  if(ml) ml.style.left=mLX+"px";
+  if(mr) mr.style.left=mRX+"px";
+  if(typeof renderTabs==='function') renderTabs();
+}
+window.addEventListener("resize", positionRulerMarkers);
+
+// === Tabs & Margin Zones ===
+let tabs=[];
+function setMargins(leftPx,rightPx){
+  document.documentElement.style.setProperty("--margin-left", (leftPx|0)+"px");
+  document.documentElement.style.setProperty("--margin-right", (rightPx|0)+"px");
+  const ml=document.getElementById('marginLeftRange'); if(ml) ml.value=String(leftPx|0);
+  const mr=document.getElementById('marginRightRange'); if(mr) mr.value=String(rightPx|0);
+  positionRulerMarkers(); saveSettings();
+}
+
+function bindDragX(handle, onMove){ if(!handle) return; handle.addEventListener('pointerdown', (ev)=>{ ev.preventDefault(); const rect=rulerEl.getBoundingClientRect(); const pad=10; const maxX=rect.width-pad*2; function move(e){ let x=e.clientX-rect.left-pad; if(x<0) x=0; if(x>maxX) x=maxX; onMove(x); } function up(){ window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up);} window.addEventListener('pointermove', move); window.addEventListener('pointerup', up); }); }
+
+// Drag left/right margin handles
+bindDragX($("markerMarginLeft"), (x)=>{ const left=Math.round(x); const r=parseInt(getComputedStyle(document.documentElement).getPropertyValue("--margin-right"))||0; setMargins(left,r); });
+bindDragX($("markerMarginRight"), (x)=>{ const w=pageEl.getBoundingClientRect().width||980; const pad=10; const maxX=w-pad*2; const right=Math.round(maxX-x); const l=parseInt(getComputedStyle(document.documentElement).getPropertyValue("--margin-left"))||0; setMargins(l,right); });
+
+function renderTabs(){ // remove old and draw
+  $$('#ruler .tab-stop').forEach(n=>n.remove());
+  const w=pageEl.getBoundingClientRect().width||980; const pad=10; const maxX=w-pad*2; tabs=(tabs||[]).filter(n=>typeof n==='number'); tabs.sort((a,b)=>a-b);
+  tabs.forEach((x,i)=>{ const el=document.createElement('div'); el.className='tab-stop'; el.style.left=(Math.max(0,Math.min(maxX,x))+pad-6)+'px'; el.title='Tab '+(i+1);
+    rulerEl.appendChild(el);
+    bindDragX(el, nx=>{ const snap=parseInt($("tabSnapSelect")?.value||'10',10); const snapped=Math.round(nx/snap)*snap; tabs[i]=Math.max(0,Math.min(maxX,snapped)); renderTabs(); saveSettings(); });
+    el.addEventListener('dblclick', ()=>{ tabs.splice(i,1); renderTabs(); saveSettings(); });
+  });
+}
+
+function addTabAt(x){ const w=pageEl.getBoundingClientRect().width||980; const pad=10; const maxX=w-pad*2; const snap=parseInt($("tabSnapSelect")?.value||'10',10); const snapped=Math.round(x/snap)*snap; tabs.push(Math.max(0,Math.min(maxX,snapped))); tabs=[...new Set(tabs)].sort((a,b)=>a-b); renderTabs(); saveSettings(); }
+
+rulerEl.addEventListener('click',(e)=>{ if(e.target.closest('.ruler-marker')||e.target.closest('.tab-stop')) return; const rect=rulerEl.getBoundingClientRect(); const pad=10; const x=e.clientX-rect.left-pad; addTabAt(x); });
+
+// Toolbar buttons
+const addTabBtn=$("addTabBtn"); if(addTabBtn) addTabBtn.onclick=()=>{ const w=pageEl.getBoundingClientRect().width||980; addTabAt((w-20)/2); };
+const clearTabBtn=$("clearTabsBtn"); if(clearTabBtn) clearTabBtn.onclick=()=>{ if(confirm('Clear all tabs?')){ tabs=[]; renderTabs(); saveSettings(); } };
+
+// Margin ranges
+const mlR=$("marginLeftRange"), mrR=$("marginRightRange"); if(mlR) mlR.oninput=function(){ setMargins(parseInt(this.value)||0, parseInt(mrR?.value||'0')||0); }; if(mrR) mrR.oninput=function(){ setMargins(parseInt(mlR?.value||'0')||0, parseInt(this.value)||0); };
+
+// TAB key behavior: jump to next/prev tab stop by inserting inline spacer
+editorEl.addEventListener('keydown', (e)=>{ if(e.key==='Tab'){ e.preventDefault(); const rect=editorEl.getBoundingClientRect(); const padLeft=parseInt(getComputedStyle(editorEl).paddingLeft)||0; const caretRect=(function(){ const sel=window.getSelection(); if(!sel||!sel.rangeCount) return null; const r=sel.getRangeAt(0).cloneRange(); r.collapse(true); const cr=r.getClientRects(); if(cr.length) return cr[0]; const sp=document.createElement('span'); sp.textContent='​'; r.insertNode(sp); const br=sp.getBoundingClientRect(); sp.remove(); return br; })(); let x=0; if(caretRect){ x=caretRect.left-rect.left-padLeft; } const mL=parseInt(getComputedStyle(document.documentElement).getPropertyValue("--margin-left"))||0; const w=pageEl.getBoundingClientRect().width||980; const pad=10; const maxX=w-pad*2; const current=mL + x; const list=(tabs||[]).slice().sort((a,b)=>a-b); let target; if(e.shiftKey){ for(let i=list.length-1;i>=0;i--){ if(list[i] < current-1){ target=list[i]; break; } } }else{ for(let i=0;i<list.length;i++){ if(list[i] > current+1){ target=list[i]; break; } } } let delta=28; if(typeof target==='number'){ delta=Math.max(4, target-current); }
+  restoreRange(); const sel=window.getSelection(); if(!sel||!sel.rangeCount) return; const range=sel.getRangeAt(0); const span=document.createElement('span'); span.style.display='inline-block'; span.style.width=delta+'px'; span.innerHTML='&nbsp;'; range.insertNode(span); range.setStartAfter(span); range.setEndAfter(span); sel.removeAllRanges(); sel.addRange(range); saveRange(); saveDoc(); }});
+
+renderTabs();
+let rulerOn=false; $("rulerBtn").onclick=()=>{ rulerOn=!rulerOn; rulerEl.classList.toggle("hidden",!rulerOn); $("rulerBtn").classList.toggle("active",rulerOn); positionRulerMarkers(); saveSettings(); };
+const PRESETS={
+  default:{ font:FONT_OPTIONS[0].value, size:18, lineHeight:1.7, padding:21, border:"thin", width:980, indentLeft:0, indentFirst:0 },
+  report:{ font:"ui-serif, Georgia, 'Times New Roman', Times, serif", size:18, lineHeight:1.75, padding:27, border:"thin", width:1020, indentLeft:0, indentFirst:0 },
+  letter:{ font:"ui-serif, Georgia, 'Times New Roman', Times, serif", size:18, lineHeight:1.75, padding:27, border:"none", width:980, indentLeft:0, indentFirst:0 },
+  resume:{ font:"ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif", size:16, lineHeight:1.55, padding:21, border:"thin", width:1100, indentLeft:0, indentFirst:0 },
+  legal:{ font:"ui-serif, Georgia, 'Times New Roman', Times, serif", size:18, lineHeight:1.85, padding:33, border:"double", width:1020, indentLeft:24, indentFirst:24 }
+};
+function applyPreset(name){
+  const p=PRESETS[name]||PRESETS.default;
+  editorEl.style.fontFamily=p.font;
+  setRootFont(p.size);
+  document.documentElement.style.setProperty("--page-line-height", String(p.lineHeight));
+  document.documentElement.style.setProperty("--page-padding", p.padding+"px");
+  setBorderMode(p.border);
+  setPageWidth(p.width);
+  $("widthRange").value=String(p.width);
+  setIndents(p.indentLeft, p.indentFirst);
+  $("indentRange").value=String(p.indentLeft);
+  $("firstIndentRange").value=String(p.indentFirst);
+  updateFontFaceUI(p.font);
+  saveSettings();
+  positionRulerMarkers();
+}
+$("presetSelect").onchange=function(){ applyPreset(this.value); };
+
+/* ===========================
+   EXPORTS / IMPORT
+   =========================== */
+$("exportPDF").onclick=()=>{ const title=(titleEl.value||"Untitled").trim(); const win=window.open("","_blank"); const css=`<style>body{font-family:${getComputedStyle(editorEl).fontFamily}; color:#111; padding:24px; line-height:${getComputedStyle(document.documentElement).getPropertyValue("--page-line-height")};} h1{font-family:var(--title-font); text-align:center; margin:0 0 18px 0;} .doc{max-width: 900px; margin:0 auto;} @media print{ body{padding:0;} .doc{max-width:100%;} }</style>`; win.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtml(title)}</title>${css}</head><body><div class="doc"><h1>${escapeHtml(title)}</h1><div>${editorEl.innerHTML}</div></div><script>window.onload=()=>{ window.print(); }<\/script><div id="toast" class="toast"></div>
+<script>
+<\/script>
+</body>
+</html>`); win.document.close(); $("exportHint").innerText="Print dialog opened. Choose “Save as PDF”."; };
+$("exportTXT").onclick=()=>{ const title=(titleEl.value||"Untitled").trim().replace(/\s+/g,"_"); downloadFile(title+".txt", editorEl.innerText||"", "text/plain"); };
+$("exportMD").onclick=()=>{ const title=(titleEl.value||"Untitled").trim().replace(/\s+/g,"_"); const md=(editorEl.innerText||"").trim(); downloadFile(title+".md", md, "text/markdown"); };
+$("exportHTML").onclick=()=>{ const title=(titleEl.value||"Untitled").trim().replace(/\s+/g,"_"); const html=`<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtml(titleEl.value||"Untitled")}</title></head><body>${editorEl.innerHTML}</body></html>`; downloadFile(title+".html", html, "text/html"); };
+$("exportDOC").onclick=()=>{ const title=(titleEl.value||"Untitled").trim().replace(/\s+/g,"_"); const html=`<!doctype html><html><head><meta charset="utf-8"></head><body>${editorEl.innerHTML}</body></html>`; downloadFile(title+".doc", html, "application/msword"); };
+// ZIP helpers for EPUB
+function crc32(buf){ let c=~0; for(let i=0;i<buf.length;i++){ c^=buf[i]; for(let k=0;k<8;k++) c=(c>>>1) ^ (0xEDB88320 & (-(c & 1))); } return ~c>>>0; }
+function u16(n){ return [n & 255, (n>>>8) & 255]; } function u32(n){ return [n & 255, (n>>>8) & 255, (n>>>16) & 255, (n>>>24) & 255]; }
+function strToUtf8Bytes(s){ return new TextEncoder().encode(s); }
+function buildZip(files){ const local=[], central=[]; let offset=0; for(const f of files){ const nameBytes=strToUtf8Bytes(f.name); const data=f.data; const crc=crc32(data); const compSize=data.length; const uncompSize=data.length; const lf=[]; lf.push(...u32(0x04034b50)); lf.push(...u16(20)); lf.push(...u16(0)); lf.push(...u16(0)); lf.push(...u16(0)); lf.push(...u16(0)); lf.push(...u32(crc)); lf.push(...u32(compSize)); lf.push(...u32(uncompSize)); lf.push(...u16(nameBytes.length)); lf.push(...u16(0)); lf.push(...nameBytes); const lfBytes=new Uint8Array(lf); local.push(lfBytes, data); const cd=[]; cd.push(...u32(0x02014b50)); cd.push(...u16(20)); cd.push(...u16(20)); cd.push(...u16(0)); cd.push(...u16(0)); cd.push(...u16(0)); cd.push(...u16(0)); cd.push(...u32(crc)); cd.push(...u32(compSize)); cd.push(...u32(uncompSize)); cd.push(...u16(nameBytes.length)); cd.push(...u16(0)); cd.push(...u16(0)); cd.push(...u16(0)); cd.push(...u16(0)); cd.push(...u32(0)); cd.push(...u32(offset)); cd.push(...nameBytes); central.push(new Uint8Array(cd)); offset += lfBytes.length + data.length; } const centralStart=offset; let centralSize=0; central.forEach(b=>{ centralSize+=b.length; offset+=b.length; }); const end=[]; end.push(...u32(0x06054b50)); end.push(...u16(0)); end.push(...u16(0)); end.push(...u16(files.length)); end.push(...u16(files.length)); end.push(...u32(centralSize)); end.push(...u32(centralStart)); end.push(...u16(0)); const endBytes=new Uint8Array(end); const total=centralStart+centralSize+endBytes.length; const out=new Uint8Array(total); let p=0; for(const chunk of local){ out.set(chunk,p); p+=chunk.length; } for(const chunk of central){ out.set(chunk,p); p+=chunk.length; } out.set(endBytes,p); return out; }
+$("exportEPUB").onclick=()=>{ const title=(titleEl.value||"Untitled").trim(); const safe=title.replace(/\s+/g,"_"); const uuid="prose-"+Math.random().toString(16).slice(2); const xhtml=`<?xml version="1.0" encoding="utf-8"?>\n<!DOCTYPE html>\n<html xmlns="http://www.w3.org/1999/xhtml">\n<head>\n  <meta charset="utf-8"/>\n  <title>${escapeHtml(title)}</title>\n</head>\n<body>\n  <h1>${escapeHtml(title)}</h1>\n  ${editorEl.innerHTML}\n</body>\n</html>`; const mimetype="application/epub+zip"; const containerXml=`<?xml version="1.0"?>\n<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">\n  <rootfiles>\n    <rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/>\n  </rootfiles>\n</container>`; const contentOpf=`<?xml version="1.0" encoding="UTF-8"?>\n<package version="2.0" unique-identifier="BookId" xmlns="http://www.idpf.org/2007/opf">\n  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">\n    <dc:title>${escapeHtml(title)}</dc:title>\n    <dc:language>en</dc:language>\n    <dc:identifier id="BookId">${escapeHtml(uuid)}</dc:identifier>\n  </metadata>\n  <manifest>\n    <item id="chapter" href="chapter.xhtml" media-type="application/xhtml+xml"/>\n  </manifest>\n  <spine toc="ncx">\n    <itemref idref="chapter"/>\n  </spine>\n</package>`; const files=[ {name:"mimetype", data:strToUtf8Bytes(mimetype)}, {name:"META-INF/container.xml", data:strToUtf8Bytes(containerXml)}, {name:"OEBPS/content.opf", data:strToUtf8Bytes(contentOpf)}, {name:"OEBPS/chapter.xhtml", data:strToUtf8Bytes(xhtml)} ]; const zipBytes=buildZip(files); const blob=new Blob([zipBytes],{type:"application/epub+zip"}); const url=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url; a.download=safe+".epub"; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),4000); $("exportHint").innerText="EPUB downloaded (offline, real .epub zip)."; };
+$("exportPROSE").onclick=()=>{ const title=(titleEl.value||"Untitled").trim().replace(/\s+/g,"_"); const payload={ version:"PROSE_OFFLINE_V1", title:titleEl.value||"", html:editorEl.innerHTML, text:editorEl.innerText, goals, comments, templates, footnotes, wordBank, settings:loadSettings(), exportedAt:new Date().toISOString() }; downloadFile(title+".prose.json", JSON.stringify(payload,null,2), "application/json"); $("exportHint").innerText="PROSE JSON exported."; };
+$("importPROSE").onclick=()=> $("importFile").click();
+$("importFile").onchange=async (e)=>{ const f=e.target.files&&e.target.files[0]; if(!f) return; try{ const txt=await f.text(); const data=JSON.parse(txt); if(!data||!data.html) throw new Error("Invalid file"); if(!confirm("Import will replace the current document content. Continue?")) return; titleEl.value=data.title||""; editorEl.innerHTML=data.html||""; goals=data.goals||goals; comments=data.comments||comments; templates=data.templates||templates; footnotes=data.footnotes||footnotes; wordBank=data.wordBank||wordBank; localStorage.setItem(STORE.goals, JSON.stringify(goals)); localStorage.setItem(STORE.comments, JSON.stringify(comments)); localStorage.setItem(STORE.templates, JSON.stringify(templates)); localStorage.setItem(STORE.footnotes, JSON.stringify(footnotes)); localStorage.setItem(STORE.wordbank, JSON.stringify(wordBank)); if(data.settings) applySettings(data.settings); renderComments(); renderTemplates(); renderFootnotes(); renderWordBank(); updateStructure(); updateGoalBar(); saveDoc(true); $("exportHint").innerText="Imported successfully."; closeModals(); }catch(err){ alert("Import failed: "+err.message); }finally{ e.target.value=""; } };
+
+/* ===========================
+   DOCUMENT SAVE / LOAD
+   =========================== */
+function loadSettings(){ try{ return JSON.parse(localStorage.getItem(STORE.settings)||"{}"); }catch(e){ return {}; } }
+function saveSettings(){ const settings={ classic: document.body.classList.contains("classic-skin"), theme:$("themeSelect").value, wide:wide, sound:sound, tracking:tracking, pageMaxWidth: parseInt(getComputedStyle(document.documentElement).getPropertyValue("--page-max-width"))||980, pageFontSize: parseInt(getComputedStyle(document.documentElement).getPropertyValue("--page-font-size"))||18, pageLineHeight: parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--page-line-height"))||1.7, pagePadding: parseInt(getComputedStyle(document.documentElement).getPropertyValue("--page-padding"))||21, borderMode:$("borderSelect").value, preset:$("presetSelect").value, rulerOn: !rulerEl.classList.contains("hidden"), indentLeft: parseInt(getComputedStyle(document.documentElement).getPropertyValue("--indent-left"))||0, indentFirst: parseInt(getComputedStyle(document.documentElement).getPropertyValue("--indent-first"))||0, marginLeft: parseInt(getComputedStyle(document.documentElement).getPropertyValue("--margin-left"))||0, marginRight: parseInt(getComputedStyle(document.documentElement).getPropertyValue("--margin-right"))||0, tabs: tabs.slice(), editorFont: editorEl.style.fontFamily||"" }; localStorage.setItem(STORE.settings, JSON.stringify(settings)); return settings; }
+function applySettings(s){ if(!s) return; if(typeof s.classic==="boolean"){ document.body.classList.toggle('classic-skin', s.classic); const cb=$("classicBtn"); if(cb) cb.innerText = s.classic? 'Classic':'Modern'; } if(s.theme){ $("themeSelect").value=s.theme; $("themeSelect").onchange(); } if(typeof s.wide==="boolean"){ wide=s.wide; $("wideBtn").innerText=wide?"Wide On":"Wide Page"; document.documentElement.style.setProperty("--page-max-width", wide?"1180px":"980px"); } if(typeof s.sound==="boolean"){ sound=s.sound; $("soundBtn").innerText=sound?"Sound On":"Sound Off"; } if(typeof s.tracking==="boolean"){ tracking=s.tracking; $("trackChangesBtn").classList.toggle("active",tracking); $("trackChangesBtn").innerHTML=tracking?"📝 Tracking":"🔍 Track"; } if(s.pageMaxWidth){ document.documentElement.style.setProperty("--page-max-width", s.pageMaxWidth+"px"); $("widthRange").value=String(s.pageMaxWidth); } if(s.pageFontSize){ document.documentElement.style.setProperty("--page-font-size", s.pageFontSize+"px"); } if(s.pageLineHeight){ document.documentElement.style.setProperty("--page-line-height", String(s.pageLineHeight)); } if(s.pagePadding){ document.documentElement.style.setProperty("--page-padding", s.pagePadding+"px"); } if(s.borderMode){ $("borderSelect").value=s.borderMode; setBorderMode(s.borderMode); } if(s.indentLeft!==undefined && s.indentFirst!==undefined){ setIndents(s.indentLeft, s.indentFirst); $("indentRange").value=String(s.indentLeft); $("firstIndentRange").value=String(s.indentFirst); } if(s.marginLeft!==undefined && s.marginRight!==undefined){ setMargins(s.marginLeft, s.marginRight); } if(s.rulerOn){ rulerEl.classList.remove("hidden"); $("rulerBtn").classList.add("active"); positionRulerMarkers(); } if(s.editorFont){ editorEl.style.fontFamily=s.editorFont; updateFontFaceUI(s.editorFont); } if(s.tabs){ tabs = s.tabs.slice(); renderTabs(); } if(s.preset){ $("presetSelect").value=s.preset; } }
+function saveDoc(showToast=false){ const payload={ title:titleEl.value||"", html:editorEl.innerHTML, savedAt:new Date().toISOString() }; localStorage.setItem(STORE.doc, JSON.stringify(payload)); saveSettings(); if(showToast){ titleEl.placeholder="Saved locally ✔"; setTimeout(()=> titleEl.placeholder="Untitled Document", 1200); } }
+function loadDoc(){ const raw=localStorage.getItem(STORE.doc); if(!raw) return; try{ const payload=JSON.parse(raw); titleEl.value=payload.title||""; editorEl.innerHTML=payload.html||""; }catch(e){} }
+
+/* ===========================
+   TRACK CHANGES (LIGHT LOG)
+   =========================== */
+let lastPlain=""; function logChange(){ if(!tracking) return; const current=(editorEl.innerText||""); if(current===lastPlain) return; const delta=current.length-lastPlain.length; const tail=current.slice(Math.max(0,current.length-80)); let log=[]; try{ log=JSON.parse(localStorage.getItem(STORE.changelog)||"[]"); }catch(e){ log=[]; } log.push({ time: nowStamp(), delta, tail }); if(log.length>60) log.shift(); localStorage.setItem(STORE.changelog, JSON.stringify(log)); lastPlain=current; }
+editorEl.addEventListener("input", ()=>{ clearTimeout(window.__trackTimer); window.__trackTimer=setTimeout(logChange,800); });
+
+/* ===========================
+   AI PANEL (AUREON + AURORA)
+   =========================== */
+const aureonPanel=$("aureonPanel"), aureonTabs=$$(".ai-tab"), aureonPrompt=$("aureonPrompt"), aureonOutput=$("aureonOutput"), aureonStyle=$("aureonStyle"), aureonEngine=$("aureonEngine");
+let aureonMode="rewrite";
+function toggleAureonPanel(){ const willOpen=aureonPanel.classList.contains("hidden"); closeModals(); if(willOpen){ aureonPanel.classList.remove("hidden"); loadAureonSelection(); aureonPrompt.focus(); } else { aureonPanel.classList.add("hidden"); } }
+aureonTabs.forEach(tab=>{ tab.addEventListener("click", ()=>{ aureonTabs.forEach(t=>t.classList.remove("active")); tab.classList.add("active"); aureonMode=tab.dataset.mode; aureonOutput.textContent=""; loadAureonSelection(); }); }); $("tabRewrite").classList.add("active");
+function loadAureonSelection(){ const sel=window.getSelection(); let text=""; if(sel&&sel.rangeCount&&sel.anchorNode&&editorEl.contains(sel.anchorNode)){ text=sel.toString().trim(); } if(!text) text=(editorEl.innerText||"").trim(); aureonPrompt.value=text||""; }
+const sovereignThesaurusTiny={"abandon":["desert","forsake","leave","relinquish"],"accept":["receive","embrace","agree to","consent"],"analyze":["examine","inspect","study","evaluate"],"beautiful":["lovely","stunning","elegant","radiant"],"clear":["lucid","plain","evident","transparent"],"create":["produce","generate","craft","originate"],"elegant":["graceful","refined","polished","stylish"],"focus":["concentrate","center","target","direct"],"gentle":["soft","tender","kind","soothing"],"honest":["truthful","sincere","frank","upright"],"improve":["enhance","refine","upgrade","better"],"kind":["compassionate","warm","caring","tender"],"logical":["rational","coherent","reasoned","sound"],"powerful":["strong","potent","compelling","forceful"],"precise":["exact","accurate","specific","definite"],"simple":["plain","uncomplicated","straightforward","clear"],"strong":["robust","solid","resilient","steady"],"support":["back","uphold","reinforce","sustain"],"vivid":["bright","lively","graphic","intense"]};
+function rewritePoetic(t){ const words=t.split(/\s+/); const out=words.map(w=>{ const base=w.replace(/[^a-zA-Z]/g,"").toLowerCase(); if(sovereignThesaurusTiny[base]){ return `${w}`; } return w; }).join(" "); return out+"\n— Like a lantern glimmering in midnight air."; }
+function runAureon(text, mode, style){ if(!text) return "Please select or enter text to process."; const templates={ rewrite:(t,s)=>{ if(s==="poetic") return rewritePoetic(t); if(s==="academic") return "In academic form:\n"+t.replace(/([.?!])\s*/g," "); if(s==="legal") return `Legal rephrasing:\n"${t}"\nThis sentence is submitted as sovereign text.`; if(s==="story") return `Storytelling mode:\nOnce, ${t.charAt(0).toLowerCase()+t.slice(1)} And a new journey began.`; if(s==="cosmic") return `Cosmic:\n${t}\n— Each word an orbit, every phrase a star.`; return "Rewritten:\n"+t; }, summarize:(t,s)=>{ const sentences=t.match(/[^\.!\?]+[\.!\?]+/g)||[t]; const summary=sentences.length>2? sentences.slice(0,2).join(" ").trim():t; return `Summary (${s}):\n`+summary; }, expand:(t,s)=>{ const add={ poetic:"Let the idea grow, unfolding in golden spirals of meaning.", academic:"This invites further study of foundational principles and supporting evidence.", legal:"These points can be expanded in detail within a sovereign codex for clarity.", story:"This was only the beginning. The tale unfolded with new characters and stakes.", cosmic:"It radiates outward, drawing celestial insight into orbit.", plain:"Here is additional detail, considering every angle and nuance." }; return `${t}\n\n${add[s]||add.plain}`; }, paraphrase:(t,s)=>{ const words=t.split(/\s+/); const idx=words.findIndex(w=>sovereignThesaurusTiny[w.toLowerCase()]); if(idx>=0){ const syn=sovereignThesaurusTiny[words[idx].toLowerCase()][0]; words[idx]=syn; } return "Paraphrased:\n"+words.join(" "); }, critique:(t,s)=>{ const hints={ poetic:"It flows—consider adding more concrete imagery and varied rhythm.", academic:"Strengthen logical progression and support claims with evidence.", legal:"Reduce ambiguity; define terms; ensure consistent phrasing.", story:"Deepen motivation; add sensory detail; consider dialogue.", cosmic:"Clarify connections between ideas—bring the stars into alignment.", plain:"Try shorter sentences and sharper verbs for clarity." }; return `Critique:\n${hints[s]||hints.plain}\n\nOriginal:\n${t}`; }, analyze:(t,s)=>{ const adverbs=(t.match(/\b\w+ly\b/g)||[]).length; const passive=/(was|were|been|is|are|be|being)\s+\w+ed\b/i.test(t)?"Passive voice detected.":"Active voice dominant."; const tone=/\b(please|urgent|happy|sad|angry|calm|excited|serene|dramatic|casual)\b/i.test(t)?"Tone keywords detected.":"Neutral tone."; return `Analyzer:\n${tone}\n${passive}\nAdverbs: ${adverbs}`; } }; return (templates[mode]?templates[mode](text, style):"Mode not found."); }
+$("aureonEngine").onchange=()=>{ const isAurora=$("aureonEngine").value==="aurora"; $("auroraOptions").style.display=isAurora?"":"none"; };
+$("aureonGenerate").onclick=()=>{ const prompt=(aureonPrompt.value||"").trim(); const style=aureonStyle.value; const engine=aureonEngine.value; if(engine==="aurora" && window.AURORA && typeof window.AURORA.auroraRefineV8Complete==="function"){ const mode=$("auroraMode").value; const tier=parseInt($("auroraTier").value)||0; const seedRaw=($("auroraSeed").value||"").trim(); const seed=seedRaw?parseInt(seedRaw,10):false; const out=window.AURORA.auroraRefineV8Complete(prompt,{mode,tier,seed}); aureonOutput.textContent=out; return; } const out=runAureon(prompt, aureonMode, style); aureonOutput.textContent=out; };
+$("aureonInsert").onclick=()=>{ const out=(aureonOutput.textContent||"").trim(); if(!out) return; editorEl.focus(); const sel=window.getSelection(); if(sel&&sel.rangeCount&&sel.anchorNode&&editorEl.contains(sel.anchorNode)){ sel.deleteFromDocument(); const range=sel.getRangeAt(0); range.deleteContents(); range.insertNode(document.createTextNode(out)); } else { editorEl.innerText += "\n"+out; } $("aureonPanel").classList.add("hidden"); saveDoc(true); updateGoalBar(); };
+
+/* ===========================
+   BOOT
+   =========================== */
+loadDoc(); applySettings(loadSettings()); updateStructure(); updateGoalBar(); positionRulerMarkers(); if(!editorEl.innerHTML.trim()){ editorEl.innerHTML="<p></p>"; } lastPlain=editorEl.innerText||""; editorEl.addEventListener("input", ()=>{ clearTimeout(window.__saveT); window.__saveT=setTimeout(()=>saveDoc(false),700); });
+
+</script>
+
+<!-- ===========================================================
+     Aurora Language Refinement Core v8.2 — Embedded (Offline)
+     =========================================================== -->
+<script>
+;(function (root) {
+  'use strict';
+  const g = (typeof root !== 'undefined') ? root : (typeof globalThis !== 'undefined' ? globalThis : window);
+  const ASCII_WORD = /\b([A-Za-z]+)\b/g;
+  function makeRng(seed) { if (seed === undefined || seed === null || seed === false) return Math.random; let s = Number(seed) >>> 0 || 1; return function () { s ^= s << 13; s ^= s >>> 17; s ^= s << 5; s >>>= 0; return (s & 0xFFFFFFFF) / 0x100000000; }; }
+  function titleCaseLike(source, replacement) { if (!source) return replacement; if (source.toUpperCase() === source) return replacement.toUpperCase(); if (source[0] === source[0].toUpperCase()) return replacement.charAt(0).toUpperCase() + replacement.slice(1); return replacement; }
+  function splitSentences(paragraph) { const parts = paragraph.split(/([.!?]+\s+)/); const out = []; for (let i = 0; i < parts.length; i += 2) { const s = (parts[i] || '').trim(); const p = parts[i + 1] || ''; if (s) out.push(s + p); } return out.length ? out : (paragraph ? [paragraph] : []); }
+  function joinParagraphs(blocks) { return blocks.join('\n\n'); }
+  const emotionMap = { happy: 'happiness', sad: 'sadness', angry: 'anger', lonely: 'solitude', brave: 'courage', calm: 'serenity', peaceful: 'peace', hopeful: 'hope', joyful: 'joy', melancholy: 'melancholy', loving: 'love' };
+  function normalizeEmotion(text) { return text.replace(/\b([A-Za-z]+)\b/g, (m, w) => { const key = w.toLowerCase(); if (emotionMap[key]) return titleCaseLike(w, emotionMap[key]); return m; }); }
+  function correctGrammar(text) { text = text.replace(/\b[Aa]n?\s+([A-Za-z]+)/g, (m, word) => { const w = word.toLowerCase(); const vowel = /^[aeiou]/.test(w); const consonantSound = /^(uni([^a-z]|$)|euro|one|once)/.test(w); const silentH = /^(hour|honest|heir|herb\b(?!-icide))/.test(w); const useAn = (vowel && !consonantSound) || silentH; const first = m[0]; const article = useAn ? (first === 'A' ? 'An' : 'an') : (first === 'A' ? 'A' : 'a'); return article + ' ' + word; }); const blocks = text.split(/\n\n/).map(b => b.replace(/\s{2,}/g, ' ').trim()); for (let i = 0; i < blocks.length; i++) { if (!blocks[i]) continue; blocks[i] = blocks[i].charAt(0).toUpperCase() + blocks[i].slice(1); if (!/[.!?]$/.test(blocks[i])) blocks[i] += '.'; } return blocks.join('\n\n'); }
+  const thesaurus = { happy: ['joyful', 'elated', 'ecstatic', 'ebullient'], sad: ['melancholy', 'mournful', 'heartbroken', 'desolate'], big: ['vast', 'immense', 'colossal', 'expansive'], small: ['delicate', 'petite', 'modest', 'compact'], fast: ['swift', 'fleet', 'rapid', 'brisk'], slow: ['gentle', 'unhurried', 'measured', 'leisurely'], bright: ['radiant', 'luminous', 'vivid', 'shimmering'], dark: ['shadowed', 'gloomy', 'dim', 'murky'], calm: ['serene', 'tranquil', 'peaceful', 'placid'] };
+  function replaceWithThesaurus(text, tier = 0) { return text.replace(ASCII_WORD, (m, w) => { const key = w.toLowerCase(); const syns = thesaurus[key]; if (!syns) return m; const replacement = syns[tier] || syns[0]; return titleCaseLike(w, replacement); }); }
+  const extendedMetaphorBank = { sun: ['a molten gold coin spilling across the sky','a fiery orb painting the horizon','a blazing lantern lighting the world'], moon: ['a silver sentinel watching over the night','a pale pearl floating in darkness','a quiet lantern in the sky'], water: ['liquid crystal flowing like silk','a mirrored veil reflecting the heavens','a winding silver ribbon'], girl: ['a blossom swaying in the wind','a star dancing in sunlight','a delicate spirit among the shadows'], happy: ['radiating joy like sunlight through leaves','bubbling with delight like a spring brook','glowing with an inner warmth'], calm: ['serene as a still lake at dawn','peaceful as a quiet forest glade','tranquil like mist over rolling hills'], saw: ['gazed upon with wonder','beheld as if enchanted','watched with rapt attention'], ran: ['darted like a lightning bolt','flowed swiftly like a river','bounded with unrestrained energy'], felt: ['was enveloped in','experienced the warmth of','was touched by'], smiled: ['bloomed like a flower in sunlight','shone with an inner radiance','spread joy as sunlight through leaves'], 'bright sun': ['the sun blazing like a golden forge','a radiant orb spilling molten light','a beacon of gold illuminating the horizon'], 'dark forest': ['a shadowed cathedral of ancient trees','a mysterious realm cloaked in gloom','a velvet expanse of whispering shadows'], 'calm lake': ['a mirror of tranquility reflecting the sky','a still pool holding the world’s secrets','a glassy expanse untouched by wind'] };
+  function applyMetaphorsBounded(text, rng, cap = { perSentence: 1, perParagraph: 1 }) { const phraseKeys = Object.keys(extendedMetaphorBank).filter(k => k.includes(' ')); const wordKeys = Object.keys(extendedMetaphorBank).filter(k => !k.includes(' ')); const paragraphs = text.split(/\n\n/); const outParas = []; for (const para of paragraphs) { let usedInParagraph = 0; const sentences = splitSentences(para); const outSent = []; for (let s of sentences) { let usedThisSentence = 0; for (const pk of phraseKeys) { if (usedThisSentence >= cap.perSentence || usedInParagraph >= cap.perParagraph) break; const re = new RegExp('\\b' + pk.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') + '\\b', 'gi'); if (re.test(s)) { const options = extendedMetaphorBank[pk]; const rep = options[Math.floor(rng() * options.length)]; s = s.replace(re, rep); usedThisSentence++; usedInParagraph++; } } if (usedThisSentence < cap.perSentence && usedInParagraph < cap.perParagraph) { for (const wk of wordKeys) { if (usedThisSentence >= cap.perSentence || usedInParagraph >= cap.perParagraph) break; const re = new RegExp('\\b' + wk + '\\b', 'gi'); if (re.test(s)) { const options = extendedMetaphorBank[wk]; const rep = options[Math.floor(rng() * options.length)]; s = s.replace(re, rep); usedThisSentence++; usedInParagraph++; } } } outSent.push(s); } outParas.push(outSent.join(' ')); } return joinParagraphs(outParas); }
+  function countSyllables(word) { word = (word || '').toLowerCase(); if (word.length <= 3) return 1; const vowels = word.match(/[aeiouy]+/g); return vowels ? vowels.length : 1; }
+  function adjustSentenceRhythm(text) { const THRESH = 28; return text.replace(/([^.!?]{40,}?)(,\s+|;\s+|\s+and\s+|\s+but\s+)/gi, (m, before, conj) => { const words = before.trim().split(/\s+/); const totalSyl = words.reduce((n, w) => n + countSyllables(w), 0); if (totalSyl > THRESH) return before.trim() + '. '; return m; }); }
+  function enhanceAlliteration(sentence, rng, cap = 2) { const words = sentence.split(/\s+/); if (words.length < 3) return sentence; const firstLetter = (words[0][0] || '').toLowerCase(); const bank = { a: ['amazing', 'aurora', 'angelic', 'azure'], b: ['blissful', 'bright', 'bountiful', 'brilliant'], c: ['calm', 'crystal', 'celestial', 'charming'], d: ['delicate', 'dreamy', 'dazzling', 'deep'], e: ['elegant', 'ethereal', 'enchanting', 'endless'], f: ['flowing', 'faint', 'fiery', 'fleeting'], g: ['gentle', 'glowing', 'graceful', 'golden'], h: ['heavenly', 'harmonious', 'hushed', 'hallowed'], i: ['illuminated', 'infinite', 'iridescent', 'inspiring'], s: ['soft', 'silver', 'silken', 'still'], r: ['radiant', 'rippling', 'restful', 'rosy'] }; if (!bank[firstLetter]) return sentence; let replaced = 0; for (let i = 1; i < words.length; i++) { const w = words[i]; if (!w) continue; if (w[0] && w[0].toLowerCase() === firstLetter) { if (replaced >= cap) break; if (rng() < 0.5) { const choice = bank[firstLetter][Math.floor(rng() * bank[firstLetter].length)]; words[i] = choice; replaced++; } } } return words.join(' '); }
+  function applyRhythmAndAlliteration(text, rng, caps = { allitPerSentence: 2 }) { text = adjustSentenceRhythm(text); const paragraphs = text.split(/\n\n/); const out = []; for (const p of paragraphs) { const sentences = splitSentences(p); for (let i = 0; i < sentences.length; i++) { sentences[i] = enhanceAlliteration(sentences[i], rng, caps.allitPerSentence); } out.push(sentences.join(' ')); } return joinParagraphs(out); }
+  const moodLexicon = { happiness: 1, joy: 1, elated: 1, blissful: 1, radiant: 1, serene: 0.9, calm: 0.8, hope: 0.8, love: 1, peaceful: 0.9, melancholy: -0.8, sad: -0.9, lonely: -0.7, desolate: -1, gloomy: -0.8, shadowed: -0.6, anger: -1 };
+  function analyzeParagraphMood(paragraph) { const words = (paragraph.toLowerCase().match(/\b\w+\b/g)) || []; if (!words.length) return 0; let total = 0; for (const w of words) total += moodLexicon[w] || 0; return total / words.length; }
+  function enforceParagraphMood(paragraph, rng) { const moodScore = analyzeParagraphMood(paragraph); const positives = ['joyful', 'elated', 'radiant', 'blissful', 'serene', 'peaceful']; const negatives = ['melancholy', 'gloomy', 'shadowed', 'desolate', 'sad']; return paragraph.replace(/(\b[\w']+\b)([.,!?…:;)]?)/g, (m, core, punc) => { const lower = core.toLowerCase(); let out = core; if (moodScore > 0 && negatives.includes(lower)) { const rep = positives[Math.floor(rng() * positives.length)]; out = titleCaseLike(core, rep); } else if (moodScore < 0 && positives.includes(lower)) { const rep = negatives[Math.floor(rng() * negatives.length)]; out = titleCaseLike(core, rep); } return out + (punc || ''); }); }
+  function harmonizeStylisticCohesion(paragraph) { const moodScore = analyzeParagraphMood(paragraph); let out = paragraph; if (moodScore > 0.5) out = adjustSentenceRhythm(out); if (moodScore < -0.5) { out = out.replace(/\b(?:like|as)\b[^.,;!?]{0,80}(?=[.,;!?]|\s|$)/gi, ''); } return out; }
+  function applyMoodConsistency(text, rng) { const paras = text.split(/\n\n/); const out = []; for (let p of paras) { p = enforceParagraphMood(p, rng); p = harmonizeStylisticCohesion(p); out.push(p); } return joinParagraphs(out); }
+  const DEFAULTS = { seed: false, tier: 0, mode: 'rich', caps: { allitPerSentence: 2 }, metaphorCap: { perSentence: 1, perParagraph: 1 } };
+  function auroraRefineV8Complete(input, options) { const opts = Object.assign({}, DEFAULTS, options || {}); const rng = makeRng(opts.seed); let text = String(input || ''); text = normalizeEmotion(text); text = correctGrammar(text); const lightOnly = (opts.mode === 'light'); if (!lightOnly) { text = applyMetaphorsBounded(text, rng, opts.metaphorCap); } text = replaceWithThesaurus(text, opts.tier); if (!lightOnly) { text = applyRhythmAndAlliteration(text, rng, opts.caps); text = applyMoodConsistency(text, rng); } return text; }
+  const AURORA = { normalizeEmotion, correctGrammar, replaceWithThesaurus, applyMetaphorsBounded, countSyllables, applyRhythmAndAlliteration, analyzeParagraphMood, applyMoodConsistency, auroraRefineV8Complete, presets: { light: (text, o) => auroraRefineV8Complete(text, Object.assign({}, o, { mode: 'light' })), rich: (text, o) => auroraRefineV8Complete(text, Object.assign({}, o, { mode: 'rich' })) } };
+  g.AURORA = AURORA; if (typeof console !== 'undefined') { console.log('Aurora v8.2 — Sovereign Pipeline Loaded (Offline)'); }
+})(typeof globalThis !== 'undefined' ? globalThis : window);
+</script>
+
+</body>
+</html>
